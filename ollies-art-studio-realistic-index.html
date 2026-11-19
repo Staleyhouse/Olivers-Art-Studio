@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ollie's Art">
+<title>Ollie's Art Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Shantell+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* layout idea: a pencil tin. Deep tin-blue bars hold the tools, the paper sits on a pale desk, pencil yellow marks the next thing to tap. */
+  --tin:#1d3f73; --tin-deep:#142c52; --tin-soft:#2d5596;
+  --pencil:#ffcf33; --pencil-deep:#e0a800;
+  --eraser:#ff8fa3; --leaf:#2fa66a;
+  --paper:#fffdf8; --desk:#e6ecf4; --card:#ffffff;
+  --graphite:#2f2b28; --soft:#5b6470; --line:#cfd8e6;
+  --display:"Shantell Sans","Comic Sans MS","Chalkboard SE",system-ui,sans-serif;
+  --body:"Lexend",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--desk);color:var(--graphite);font-family:var(--body);font-size:17px;line-height:1.4;
+  overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;overflow:hidden}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation;padding:0}
+button:focus-visible,input:focus-visible{outline:3px solid var(--pencil);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+.view{display:none;height:100%;flex-direction:column}
+.view.on{display:flex}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px clamp(16px,3vw,36px) 40px}
+
+/* top bars */
+.bar{background:var(--tin);color:#fff;display:flex;align-items:center;gap:10px;padding:8px 14px;min-height:60px;flex:none}
+.bar h1{font-size:26px;font-weight:800;letter-spacing:.2px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar h1 small{font-family:var(--body);font-weight:500;font-size:15px;opacity:.8;margin-left:10px}
+.tb{display:flex;align-items:center;gap:7px;height:44px;padding:0 14px;border-radius:12px;background:var(--tin-soft);color:#fff;font-weight:600;font-size:16px;flex:none}
+.tb svg{width:22px;height:22px;flex:none}
+.tb:active{transform:translateY(1px)}
+.tb.go{background:var(--pencil);color:var(--tin-deep)}
+.tb.warn{background:var(--eraser);color:#5a1020}
+.tb[disabled]{opacity:.38}
+.tb.icon{padding:0;width:48px;justify-content:center}
+
+/* home */
+.hero{display:grid;grid-template-columns:1.25fr 1fr;gap:18px;margin-bottom:26px}
+.big{border-radius:22px;padding:22px 24px;display:flex;align-items:center;gap:18px;text-align:left;min-height:132px;box-shadow:0 3px 0 rgba(20,44,82,.18)}
+.big h2{font-size:30px;font-weight:800}
+.big p{margin:4px 0 0;font-size:16px}
+.big.free{background:var(--pencil);color:var(--tin-deep)}
+.big.book{background:var(--card);border:2px solid var(--line)}
+.big .art{width:108px;height:86px;flex:none;border-radius:12px;background:var(--paper);box-shadow:0 2px 6px rgba(0,0,0,.18);overflow:hidden}
+.big .art canvas{width:100%;height:100%;display:block}
+.sect{display:flex;align-items:baseline;gap:12px;margin:0 0 12px}
+.sect h2{font-size:24px;font-weight:800}
+.sect span{color:var(--soft);font-size:15px}
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.cat{background:var(--card);border-radius:20px;border:2px solid var(--line);overflow:hidden;text-align:left;display:flex;flex-direction:column;box-shadow:0 3px 0 rgba(20,44,82,.1)}
+.cat .pic{background:var(--paper);aspect-ratio:4/3;display:flex;justify-content:center;border-bottom:2px solid var(--line)}
+.cat .pic svg{height:100%}
+.cat .txt{padding:12px 14px 14px}
+.cat h3{font-size:21px;font-weight:800}
+.cat p{margin:2px 0 8px;color:var(--soft);font-size:14px}
+.cat.first{border-color:var(--pencil-deep);box-shadow:0 3px 0 var(--pencil-deep)}
+.tag{display:inline-block;background:var(--pencil);color:var(--tin-deep);font-weight:700;font-size:13px;border-radius:99px;padding:2px 10px;margin-bottom:6px}
+.meter{height:10px;border-radius:99px;background:var(--desk);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--leaf);border-radius:99px}
+.count{font-size:13px;color:var(--soft);margin-top:5px;font-variant-numeric:tabular-nums}
+
+/* lesson list */
+.lessons{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.les{background:var(--card);border-radius:16px;border:2px solid var(--line);overflow:hidden;text-align:left;position:relative;display:flex;flex-direction:column}
+.les .pic{background:var(--paper);aspect-ratio:1}
+.les .pic svg{width:100%;height:100%;display:block}
+.les .nm{padding:8px 10px 10px;font-weight:600;font-size:15.5px;display:flex;justify-content:space-between;gap:6px;align-items:center}
+.les .num{position:absolute;left:8px;top:8px;background:var(--tin);color:#fff;border-radius:99px;min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;padding:0 7px;font-variant-numeric:tabular-nums}
+.les .lv{display:flex;gap:3px;flex:none}
+.les .lv i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.les .lv i.f{background:var(--pencil-deep)}
+.les.done{border-color:var(--leaf)}
+.les.done::after{content:"";position:absolute;right:8px;top:8px;width:30px;height:30px;border-radius:50%;background:var(--leaf) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/20px no-repeat}
+.lvhead{grid-column:1/-1;font-family:var(--display);font-weight:800;font-size:19px;margin:10px 0 -2px;display:flex;align-items:center;gap:10px}
+.lvhead small{font-family:var(--body);font-weight:400;color:var(--soft);font-size:14px}
+
+/* studio */
+.work{flex:1;display:grid;grid-template-columns:auto auto 1fr auto;min-height:0}
+.rail{background:var(--tin-deep);width:96px;overflow-y:auto;padding:8px 6px;display:flex;flex-direction:column;gap:6px;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.tool{border-radius:12px;padding:5px 4px 6px;color:#dbe6f7;font-size:12.5px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1.15;text-align:center}
+.tool canvas,.tool .ico{width:72px;height:34px;border-radius:8px;background:var(--paper);display:block}
+.tool.on{background:var(--pencil);color:var(--tin-deep);font-weight:700}
+.dock{background:var(--tin);width:64px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:8px;overflow-y:auto;scrollbar-width:none}
+.dock::-webkit-scrollbar{display:none}
+.dock .lab{color:#c5d5ee;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:2px}
+.sz{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--tin-soft)}
+.sz i{display:block;border-radius:50%;background:#fff}
+.sz.on{background:var(--pencil)} .sz.on i{background:var(--tin-deep)}
+.chip{width:50px;height:50px;border-radius:50%;border:4px solid #fff;box-shadow:0 0 0 2px var(--tin-deep)}
+.stage{position:relative;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;padding:12px;overflow:hidden}
+.paper{position:relative;background:var(--paper);box-shadow:0 2px 0 #c3ccd9,0 10px 24px rgba(20,44,82,.18);border-radius:4px;overflow:hidden;flex:none}
+.paper canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
+#live{pointer-events:none}
+.trace{position:absolute;inset:0;display:flex;justify-content:center;pointer-events:none;opacity:.42}
+.trace svg{height:100%}
+.pal{position:absolute;left:8px;bottom:8px;z-index:5;background:#fff;border-radius:18px;padding:12px;box-shadow:0 10px 30px rgba(20,44,82,.35);display:none;grid-template-columns:repeat(5,48px);gap:8px}
+.pal.on{display:grid}
+.pal button{width:48px;height:48px;border-radius:50%;border:3px solid rgba(0,0,0,.14)}
+.pal button.on{border-color:var(--tin);box-shadow:0 0 0 3px var(--pencil)}
+
+.panel{width:272px;background:var(--card);border-left:2px solid var(--line);display:flex;flex-direction:column;overflow-y:auto;min-height:0}
+.panel.off{display:none}
+.panel .pic{background:var(--paper);border-bottom:2px solid var(--line);aspect-ratio:1;max-height:40vh;width:100%;flex:none}
+.panel .pic svg{width:100%;height:100%;display:block}
+.panel .body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px;flex:1}
+.stepno{font-size:13px;font-weight:700;color:var(--tin-soft);text-transform:uppercase;letter-spacing:.7px}
+.panel h3{font-size:24px;font-weight:800;margin-top:-6px}
+.panel p{margin:0;font-size:17px;line-height:1.45}
+.dots{display:flex;gap:6px}
+.dots i{flex:1;height:8px;border-radius:99px;background:var(--desk)}
+.dots i.f{background:var(--tin-soft)} .dots i.c{background:var(--pencil-deep)}
+.pbtn{height:46px;border-radius:12px;font-weight:600;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 12px;background:var(--desk);color:var(--tin-deep)}
+.pbtn svg{width:20px;height:20px}
+.pbtn.on{background:var(--tin);color:#fff}
+.pbtn.use{background:#fff3c4;border:2px solid var(--pencil-deep)}
+.ctl{display:flex;flex-direction:column;gap:10px;margin-top:auto}
+.nav{display:grid;grid-template-columns:1fr 1.5fr;gap:8px}
+.nav .next{background:var(--pencil);color:var(--tin-deep);font-weight:700;height:54px;font-size:18px}
+.nav .back{height:54px}
+.nav .next.fin{background:var(--leaf);color:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* sketchbook */
+.book{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+.sk{background:var(--card);border-radius:16px;border:2px solid var(--line);overflow:hidden;display:flex;flex-direction:column}
+.sk img{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--paper);display:block;border-bottom:2px solid var(--line)}
+.sk .nm{padding:8px 12px 2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sk .dt{padding:0 12px;color:var(--soft);font-size:13px}
+.sk .act{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;padding:10px}
+.sk .act button{height:42px;border-radius:10px;background:var(--desk);font-weight:600;font-size:15px;color:var(--tin-deep);padding:0 10px}
+.sk .act .open{background:var(--pencil)}
+.sk .act .del{background:#ffe1e6;color:#8a1730}
+.empty{background:var(--card);border:2px dashed var(--line);border-radius:18px;padding:34px;text-align:center;color:var(--soft);max-width:560px;margin:30px auto}
+.empty h3{color:var(--graphite);font-size:24px;margin-bottom:6px}
+.note{color:var(--soft);font-size:14px;margin:0 0 14px}
+
+
+/* real-photo reference tools */
+.photo-open{background:#fff;color:var(--tin-deep);border:2px solid var(--pencil);font-weight:700}
+.photo-card{position:absolute;z-index:8;top:12px;left:12px;width:min(260px,42%);max-height:46%;background:#fff;border:2px solid var(--tin-soft);border-radius:14px;box-shadow:0 8px 24px rgba(20,44,82,.28);overflow:hidden;display:none}
+.photo-card.on{display:block}
+.photo-card img{display:block;width:100%;max-height:210px;object-fit:contain;background:#f5f5f5}
+.photo-card .photo-cap{display:flex;align-items:center;gap:6px;padding:6px 8px;font-size:12px;font-weight:600;color:var(--tin-deep)}
+.photo-card .photo-cap span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.photo-card button{background:var(--desk);border-radius:7px;padding:4px 8px;font-size:12px}
+.photo-veil{position:fixed;inset:0;background:rgba(20,44,82,.62);z-index:22;display:none;align-items:center;justify-content:center;padding:14px}
+.photo-veil.on{display:flex}
+.photo-dialog{background:#fff;border-radius:20px;padding:18px;width:min(760px,100%);max-height:92%;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.photo-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.photo-head h2{font-size:25px;flex:1}
+.photo-close{width:42px;height:42px;border-radius:12px;background:var(--desk);font-size:24px}
+.photo-help{font-size:14px;color:var(--soft);margin:0 0 12px}
+.photo-search{display:flex;gap:8px;margin:12px 0}
+.photo-search input{flex:1;min-width:0;height:48px;border:2px solid var(--line);border-radius:12px;padding:0 12px;font:inherit;font-size:16px;color:var(--graphite);background:#fff}
+.photo-action{background:var(--pencil);color:var(--tin-deep);font-weight:700;border-radius:12px;padding:0 16px}
+.photo-upload{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px;border:2px dashed var(--line);border-radius:12px;font-weight:700;color:var(--tin-deep);cursor:pointer}
+.photo-upload input{display:none}
+.photo-status{font-size:14px;color:var(--soft);min-height:22px;margin:10px 0}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.photo-result{border:2px solid var(--line);border-radius:12px;overflow:hidden;text-align:left;background:#fff}
+.photo-result img{width:100%;height:120px;object-fit:cover;display:block;background:#f1f1f1}
+.photo-result span{display:block;padding:7px;font-size:13px;font-weight:600}
+.photo-footer{font-size:12px;color:var(--soft);margin-top:12px}
+@media(max-width:560px){.photo-search{flex-wrap:wrap}.photo-search input{flex-basis:100%}.photo-result img{height:100px}.photo-dialog{padding:14px}}
+
+/* dialogs, toast, party */
+.veil{position:fixed;inset:0;background:rgba(20,44,82,.55);display:none;align-items:center;justify-content:center;z-index:20;padding:16px}
+.veil.on{display:flex}
+.dlg{background:#fff;border-radius:22px;padding:22px;max-width:440px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.dlg h3{font-size:25px;font-weight:800;margin-bottom:6px}
+.dlg p{margin:0 0 14px;color:var(--soft)}
+.dlg input{width:100%;height:52px;border-radius:12px;border:2px solid var(--line);font:inherit;font-size:19px;padding:0 14px;margin-bottom:14px;-webkit-user-select:text;user-select:text;background:#fff;color:var(--graphite)}
+.dlg .btns{display:flex;flex-direction:column;gap:9px}
+.dlg .btns button{height:54px;border-radius:14px;font-weight:700;font-size:18px;background:var(--desk);color:var(--tin-deep)}
+.dlg .btns .go{background:var(--pencil)}
+.dlg .btns .ok{background:var(--leaf);color:#fff}
+.dlg .btns .warn{background:var(--eraser);color:#5a1020}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--tin-deep);color:#fff;padding:12px 20px;border-radius:99px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:30;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.party{position:fixed;inset:0;pointer-events:none;z-index:25;overflow:hidden}
+.party i{position:absolute;top:-20px;width:12px;height:18px;border-radius:3px;animation:fall 1.6s ease-in forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@media (prefers-reduced-motion:reduce){.party i{animation:none;display:none}.toast{transition:none}}
+
+@media (orientation:portrait){
+  .work{grid-template-columns:auto auto 1fr;grid-template-rows:auto 1fr}
+  .panel{grid-column:1/-1;grid-row:1;width:auto;flex-direction:row;border-left:0;border-bottom:2px solid var(--line);overflow:visible}
+  .panel .pic{width:236px;border-bottom:0;border-right:2px solid var(--line)}
+  .panel .body{gap:7px;padding:10px 14px}
+  .panel h3{font-size:21px}
+  .ctl{flex-direction:row}
+  .ctl .row2{flex:1} .ctl .nav{flex:1.25}
+  .ctl .pbtn,.nav .next,.nav .back{height:46px;font-size:15.5px}
+  #p-tool{height:38px}
+  .rail{grid-row:2;grid-column:1;width:92px}
+  .dock{grid-row:2;grid-column:2}
+  .stage{grid-row:2;grid-column:3}
+  .hero{grid-template-columns:1fr}
+}
+@media (max-width:820px){.bar h1 small{display:none}.tb span{display:none}.tb{padding:0;width:46px;justify-content:center}.tb.keep span{display:inline}.tb.keep{width:auto;padding:0 14px}}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<section class="view on" id="v-home">
+  <div class="bar"><h1>Ollie's Art Studio <small>Learn it. Draw it. Shade it.</small></h1></div>
+  <div class="scroll">
+    <div class="hero">
+      <button class="big free" id="b-free"><div class="art"><canvas id="heroart" width="216" height="172"></canvas></div><div><h2>Free Draw</h2><p>A blank page and all your tools.</p></div></button>
+      <button class="big book" id="b-book"><div><h2>My Sketchbook</h2><p id="bookcount">Your saved drawings live here.</p></div></button>
+    </div>
+    <div class="sect"><h2>Drawing Lessons</h2><span id="totaldone"></span></div>
+    <div class="cats" id="cats"></div>
+  </div>
+</section>
+
+<!-- LESSON LIST -->
+<section class="view" id="v-list">
+  <div class="bar"><button class="tb keep" data-go="home"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Home</span></button><h1 id="listtitle">Lessons</h1></div>
+  <div class="scroll"><p class="note" id="listnote"></p><div class="lessons" id="lessons"></div></div>
+</section>
+
+<!-- SKETCHBOOK -->
+<section class="view" id="v-book">
+  <div class="bar"><button class="tb keep" data-go="home"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Home</span></button><h1>My Sketchbook</h1></div>
+  <div class="scroll"><p class="note" id="booknote"></p><div class="book" id="book"></div></div>
+</section>
+
+<!-- STUDIO -->
+<section class="view" id="v-studio">
+  <div class="bar">
+    <button class="tb keep" id="s-home"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Back</span></button>
+    <h1 id="s-title">Free Draw</h1>
+    <button class="tb" id="s-undo" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M8 5L3 10l5 5M3 10h11a6 6 0 010 12h-3" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Undo</span></button>
+    <button class="tb" id="s-redo" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="M16 5l5 5-5 5M21 10H10a6 6 0 000 12h3" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Redo</span></button>
+    <button class="tb warn" id="s-clear" aria-label="Start over"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Start over</span></button>
+    <button class="tb photo-open" id="s-photos" aria-label="Find a photo reference"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="8.5" cy="9" r="1.5" fill="currentColor"/><path d="M4 17l5-5 3 3 3-4 5 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg><span>Photo</span></button>
+    <button class="tb" id="s-lesson" aria-label="Show or hide the lesson"><svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg><span>Lesson</span></button>
+    <button class="tb go keep" id="s-save"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5zM8 4v6h7V4M8 20v-6h8v6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg><span>Save</span></button>
+  </div>
+  <div class="work">
+    <div class="rail" id="rail"></div>
+    <div class="dock" id="dock"></div>
+    <div class="stage" id="stage">
+      <div class="paper" id="paper">
+        <div class="trace" id="trace"></div>
+        <canvas id="ink" width="1600" height="1200"></canvas>
+        <canvas id="live" width="1600" height="1200"></canvas>
+      </div>
+      <div class="pal" id="pal"></div>
+      <div class="photo-card" id="photo-card"><img id="photo-card-img" alt="Selected photo reference"><div class="photo-cap"><span id="photo-card-name">Photo reference</span><button id="photo-hide" type="button">Hide</button><button id="photo-change" type="button">Change</button></div></div>
+    </div>
+    <aside class="panel off" id="panel">
+      <div class="pic" id="p-pic"></div>
+      <div class="body">
+        <div class="dots" id="p-dots"></div>
+        <div class="stepno" id="p-no"></div>
+        <h3 id="p-name"></h3>
+        <p id="p-text"></p>
+        <button class="pbtn use" id="p-tool"></button>
+        <div class="ctl"><div class="row2">
+          <button class="pbtn" id="p-trace"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-dasharray="3 2.4"/></svg><span>Trace</span></button>
+          <button class="pbtn" id="p-read"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Read it</span></button>
+        </div>
+        <div class="nav"><button class="pbtn back" id="p-back">Back</button><button class="pbtn next" id="p-next">Next step</button></div></div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<div class="veil" id="veil"><div class="dlg" id="dlg"></div></div>
+<div class="photo-veil" id="photo-veil" role="dialog" aria-modal="true" aria-label="Photo references">
+  <div class="photo-dialog">
+    <div class="photo-head"><h2>Real-life photo references</h2><button class="photo-close" id="photo-close" aria-label="Close">×</button></div>
+    <p class="photo-help">Search for a subject to see real photographs, or upload a picture from your iPad. Choose any image to keep it beside your drawing.</p>
+    <div class="photo-search"><input id="photo-query" type="search" placeholder="Try: red fox, rose, soccer ball…" autocomplete="off"><button class="photo-action" id="photo-search-btn">Search photos</button></div>
+    <label class="photo-upload">＋ Upload Your Own Photo<input id="photo-file" type="file" accept="image/*"></label>
+    <div class="photo-status" id="photo-status" aria-live="polite">Showing sample photos. Search needs a free Unsplash Access Key in the app settings.</div>
+    <div class="photo-grid" id="photo-grid"></div>
+    <p class="photo-footer">Photos from Unsplash are shown with photographer attribution. Uploaded photos stay on this device and are not sent to Unsplash.</p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="party" id="party"></div>
+
+<script>
+/* engine */
+/* Guide engine: turns compact lesson data into step-by-step drawing guides (SVG).
+   Runs in the browser and in node (for checking). */
+(function (root) {
+  'use strict';
+  var INK = '#2f2b28', NEW = '#1f7ae0', OLD = '#aab9cf', PAPER = '#fffdf8', SUN = '#f5a623';
+  var uid = 0;
+  function f(n) { return Math.round(n * 100) / 100; }
+
+  /* ---------- colour helpers ---------- */
+  function hex(c) {
+    c = c.replace('#', '');
+    if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+    return [parseInt(c.slice(0, 2), 16), parseInt(c.slice(2, 4), 16), parseInt(c.slice(4, 6), 16)];
+  }
+  function mix(a, b, t) {
+    var A = hex(a), B = hex(b), o = '#';
+    for (var i = 0; i < 3; i++) { var v = Math.round(A[i] + (B[i] - A[i]) * t).toString(16); o += v.length < 2 ? '0' + v : v; }
+    return o;
+  }
+
+  /* ---------- parsing ---------- */
+  function parseShapes(str) {
+    return (str || '').trim().split(/\s+/).filter(Boolean).map(function (tok) {
+      return { k: tok[0], a: tok.slice(1).split(',').map(Number) };
+    });
+  }
+  function parseGroups(str) {
+    return (str || '').split('/').map(function (g) {
+      var toks = g.trim().split(/\s+/).filter(Boolean), col = null, fig = false, sep = false;
+      while (toks[0] && (toks[0][0] === '#' || toks[0] === '@' || toks[0] === '~')) {
+        var t = toks.shift();
+        if (t === '@') fig = true; else if (t === '~') sep = true; else col = t;
+      }
+      return { col: col, fig: fig, sep: sep, shapes: toks.map(function (tok) { return { k: tok[0], a: tok.slice(1).split(',').map(Number) }; }) };
+    }).filter(function (g) { return g.shapes.length || g.fig; });
+  }
+
+  /* ---------- stick-figure macro ----------
+     fig: [hx,hy,hr, nx,ny, px,py, lex,ley,lhx,lhy, rex,rey,rhx,rhy, lkx,lky,lfx,lfy, rkx,rky,rfx,rfy, w, sw, fd]
+     head, neck base, pelvis, left elbow+hand, right elbow+hand, left knee+foot, right knee+foot,
+     limb width, shoulder half-width, foot direction (0 splay, 1 right, -1 left) */
+  function figShapes(a) {
+    var hx = a[0], hy = a[1], hr = a[2], nx = a[3], ny = a[4], px = a[5], py = a[6];
+    var w = a[23] || 4, sw = a[24] == null ? 6 : a[24], fd = a[25] || 0;
+    var dx = px - nx, dy = py - ny, L = Math.sqrt(dx * dx + dy * dy) || 1;
+    var ux = dx / L, uy = dy / L, qx = uy, qy = -ux; // q = screen-right for an upright spine
+    var rot = Math.atan2(dy, dx) * 180 / Math.PI - 90;
+    var S = function (k, arr) { return { k: k, a: arr }; };
+    var body = [], head = [];
+    var tw = Math.max(2 * sw * 0.8 + w * 0.9, w * 2.1);
+    var Ls = [nx - qx * sw, ny - qy * sw], Rs = [nx + qx * sw, ny + qy * sw];
+    var Lh = [px - qx * sw * 0.55, py - qy * sw * 0.55], Rh = [px + qx * sw * 0.55, py + qy * sw * 0.55];
+    // torso: chest + pelvis bubbles joined by the spine
+    body.push(S('e', [nx + dx * 0.3, ny + dy * 0.3, Math.max(sw + w * 0.75, w * 1.35), L * 0.36, rot]));
+    body.push(S('e', [px - dx * 0.06, py - dy * 0.06, Math.max(sw * 0.75 + w * 0.6, w * 1.15), L * 0.2, rot]));
+    body.push(S('l', [nx + dx * 0.08, ny + dy * 0.08, px, py, tw, tw * 0.82]));
+    // neck
+    body.push(S('l', [hx + (nx - hx) * 0.55, hy + (ny - hy) * 0.55, nx, ny, w * 0.95]));
+    // arms
+    body.push(S('l', [Ls[0], Ls[1], a[7], a[8], w]));
+    body.push(S('l', [a[7], a[8], a[9], a[10], w, w * 0.8]));
+    head.push(S('c', [a[9], a[10], w * 0.66]));
+    body.push(S('l', [Rs[0], Rs[1], a[11], a[12], w]));
+    body.push(S('l', [a[11], a[12], a[13], a[14], w, w * 0.8]));
+    head.push(S('c', [a[13], a[14], w * 0.66]));
+    // legs
+    body.push(S('l', [Lh[0], Lh[1], a[15], a[16], w * 1.3, w * 1.1]));
+    body.push(S('l', [a[15], a[16], a[17], a[18], w * 1.1, w * 0.85]));
+    body.push(S('l', [Rh[0], Rh[1], a[19], a[20], w * 1.3, w * 1.1]));
+    body.push(S('l', [a[19], a[20], a[21], a[22], w * 1.1, w * 0.85]));
+    var lfd = fd || -1, rfd = fd || 1;
+    body.push(S('e', [a[17] + lfd * w * 0.55, a[18] + w * 0.1, w * 1.05, w * 0.55, 0]));
+    body.push(S('e', [a[21] + rfd * w * 0.55, a[22] + w * 0.1, w * 1.05, w * 0.55, 0]));
+    head.push(S('c', [hx, hy, hr]));
+    return [body, head];
+  }
+
+
+  /* face + hair for a figure head: face 'f' front, 'r'/'l' side, 0 none; hair 's' short, 'l' long, 0 none */
+  function faceShapes(a, face, hair, fr) {
+    var hx = a[0], hy = a[1], r = a[2], out = [], t = (fr || 0) * Math.PI / 180, c = Math.cos(t), s = Math.sin(t);
+    function P(x, y) { return [f(hx + (x * c - y * s) * r), f(hy + (x * s + y * c) * r)]; }
+    function flat(list) { var o = []; list.forEach(function (p) { o.push(p[0], p[1]); }); return o; }
+    function arc(cx, cy, rad, a0, a1) { var o = [], n = 10, i, u; for (i = 0; i <= n; i++) { u = (a0 + (a1 - a0) * i / n) * Math.PI / 180; o.push(P(cx + rad * Math.cos(u), cy + rad * Math.sin(u))); } return o; }
+    var er = Math.max(0.7, r * 0.11), m = face === 'l' ? -1 : 1, tilt = face === 'r' ? -22 : face === 'l' ? 22 : 0;
+    if (hair) {
+      out.push({ k: 'P', a: flat(arc(0, 0, 1.04, 190 + tilt, 350 + tilt).concat(arc(0, 0.5, 0.98, 330 + tilt * 0.6, 210 + tilt * 0.6))) });
+      if (hair === 'l') {
+        out.push({ k: 'P', a: flat([P(-1.04, -0.25), P(-1.22, 1.25), P(-0.72, 1.35), P(-0.84, 0.05)]) });
+        out.push({ k: 'P', a: flat([P(1.04, -0.25), P(1.22, 1.25), P(0.72, 1.35), P(0.84, 0.05)]) });
+      }
+    }
+    if (face === 'f') {
+      var e1 = P(-0.36, 0), e2 = P(0.36, 0);
+      out.push({ k: 'C', a: [e1[0], e1[1], er] }, { k: 'C', a: [e2[0], e2[1], er] }, { k: 'p', a: flat(arc(0, 0.14, 0.42, 25, 155)) });
+    } else if (face === 'r' || face === 'l') {
+      var e = P(0.42 * m, -0.06);
+      out.push({ k: 'C', a: [e[0], e[1], er] }, { k: 'p', a: flat([P(0.93 * m, -0.08), P(1.22 * m, 0.16), P(0.93 * m, 0.24)]) }, { k: 'p', a: flat([P(0.5 * m, 0.5), P(0.84 * m, 0.44)]) });
+    }
+    return out;
+  }
+
+  /* ---------- geometry ---------- */
+  function ellipsePath(x, y, rx, ry, rot) {
+    var t = (rot || 0) * Math.PI / 180, c = Math.cos(t), s = Math.sin(t);
+    var x1 = x + rx * c, y1 = y + rx * s, x2 = x - rx * c, y2 = y - rx * s, r = f(rot || 0);
+    return 'M' + f(x1) + ' ' + f(y1) + 'A' + f(rx) + ' ' + f(ry) + ' ' + r + ' 1 0 ' + f(x2) + ' ' + f(y2) +
+      'A' + f(rx) + ' ' + f(ry) + ' ' + r + ' 1 0 ' + f(x1) + ' ' + f(y1) + 'Z';
+  }
+  function polyPath(pts, closed) {
+    var d = '';
+    for (var i = 0; i < pts.length; i++) d += (i ? 'L' : 'M') + f(pts[i][0]) + ' ' + f(pts[i][1]);
+    return d + (closed ? 'Z' : '');
+  }
+  function pairs(a, from) { var o = []; for (var i = from || 0; i + 1 < a.length; i += 2) o.push([a[i], a[i + 1]]); return o; }
+  function quadPts(x1, y1, cx, cy, x2, y2, n) {
+    var o = []; n = n || 12;
+    for (var i = 0; i <= n; i++) { var t = i / n, m = 1 - t; o.push([m * m * x1 + 2 * m * t * cx + t * t * x2, m * m * y1 + 2 * m * t * cy + t * t * y2]); }
+    return o;
+  }
+  function splinePts(p, n) {
+    if (p.length < 3) return p.slice();
+    var o = []; n = n || 8;
+    for (var i = 0; i < p.length - 1; i++) {
+      var p0 = p[i ? i - 1 : 0], p1 = p[i], p2 = p[i + 1], p3 = p[i + 2 < p.length ? i + 2 : p.length - 1];
+      for (var j = 0; j < n; j++) {
+        var t = j / n, t2 = t * t, t3 = t2 * t;
+        o.push([0.5 * (2 * p1[0] + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
+        0.5 * (2 * p1[1] + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)]);
+      }
+    }
+    o.push(p[p.length - 1]);
+    return o;
+  }
+  function arcPts(cx, cy, r, a0, a1) {
+    var o = [], n = Math.max(6, Math.ceil(Math.abs(a1 - a0) / 12));
+    for (var i = 0; i <= n; i++) { var t = (a0 + (a1 - a0) * i / n) * Math.PI / 180; o.push([cx + r * Math.cos(t), cy + r * Math.sin(t)]); }
+    return o;
+  }
+
+  /* form shape -> primitive: blob {d, round, bb, prim} or seg {pts, w1, w2, bb} */
+  function prim(s) {
+    var a = s.a, k = s.k, hw, hh, t, c, n, pts, i, bb;
+    if (k === 'c') return { t: 'blob', round: 1, main: 1, d: ellipsePath(a[0], a[1], a[2], a[2], 0), bb: [a[0] - a[2], a[1] - a[2], a[0] + a[2], a[1] + a[2]] };
+    if (k === 'e') {
+      t = (a[4] || 0) * Math.PI / 180; c = Math.cos(t); n = Math.sin(t);
+      hw = Math.sqrt(a[2] * a[2] * c * c + a[3] * a[3] * n * n); hh = Math.sqrt(a[2] * a[2] * n * n + a[3] * a[3] * c * c);
+      return { t: 'blob', round: 1, main: 1, d: ellipsePath(a[0], a[1], a[2], a[3], a[4]), bb: [a[0] - hw, a[1] - hh, a[0] + hw, a[1] + hh] };
+    }
+    if (k === 'r') {
+      t = (a[4] || 0) * Math.PI / 180; c = Math.cos(t); n = Math.sin(t);
+      var w2 = a[2] / 2, h2 = a[3] / 2;
+      pts = [[-w2, -h2], [w2, -h2], [w2, h2], [-w2, h2]].map(function (p) { return [a[0] + p[0] * c - p[1] * n, a[1] + p[0] * n + p[1] * c]; });
+      return { t: 'blob', main: 1, d: polyPath(pts, 1), bb: bbox(pts, 0) };
+    }
+    if (k === 'p') { pts = pairs(a); return { t: 'blob', d: polyPath(pts, 1), bb: bbox(pts, 0) }; }
+    if (k === 'o') {
+      var ring = [], ang;
+      for (i = 0; i < a[3]; i++) { ang = (a[6] || 0) + i * 360 / a[3]; ring.push(prim({ k: 'e', a: [a[0] + a[2] * Math.cos(ang * Math.PI / 180), a[1] + a[2] * Math.sin(ang * Math.PI / 180), a[4], a[5], ang] })); }
+      ring.forEach(function (r) { r.main = 0; });
+      return ring;
+    }
+    if (k === 'l') { pts = [[a[0], a[1]], [a[2], a[3]]]; return seg(pts, a[4], a[5]); }
+    if (k === 'q') { return seg(quadPts(a[0], a[1], a[2], a[3], a[4], a[5]), a[6], a[7]); }
+    if (k === 's') { return seg(splinePts(pairs(a, 2)), a[0], a[1], pairs(a, 2)); }
+    return null;
+  }
+  function seg(pts, w1, w2, ctrl) {
+    w1 = w1 || 3; if (w2 == null || isNaN(w2)) w2 = w1;
+    return { t: 'seg', pts: pts, ctrl: ctrl || [pts[0], pts[pts.length - 1]], w1: w1, w2: w2, bb: bbox(pts, Math.max(w1, w2) / 2) };
+  }
+  function bbox(pts, pad) {
+    var b = [1e9, 1e9, -1e9, -1e9];
+    pts.forEach(function (p) { b[0] = Math.min(b[0], p[0] - pad); b[1] = Math.min(b[1], p[1] - pad); b[2] = Math.max(b[2], p[0] + pad); b[3] = Math.max(b[3], p[1] + pad); });
+    return b;
+  }
+
+  /* ---------- lesson model ---------- */
+  function model(lesson) {
+    if (lesson._m) return lesson._m;
+    var groups = parseGroups(lesson.f), out = [], extra = [];
+    var figs = lesson.fig ? (typeof lesson.fig[0] === 'number' ? [lesson.fig] : lesson.fig) : [];
+    function pick(v, i) { return Array.isArray(v) ? v[i] : v; }
+    function pushFigs() {
+      figs.forEach(function (fa, i) {
+        var g = figShapes(fa);
+        out.push({ col: pick(lesson.fk, i) || null, shapes: g[0] });
+        out.push({ col: pick(lesson.hk, i) || '#f1c9a5', shapes: g[1] });
+        var face = lesson.face === undefined ? 'f' : pick(lesson.face, i), hair = lesson.hair === undefined ? 's' : pick(lesson.hair, i);
+        extra = extra.concat(faceShapes(fa, face, hair, pick(lesson.fr, i)));
+      });
+    }
+    if (figs.length && !groups.some(function (g) { return g.fig; })) pushFigs();
+    groups.forEach(function (g) {
+      if (g.fig) { pushFigs(); if (g.shapes.length) out.push({ col: g.col, shapes: g.shapes }); }
+      else out.push(g);
+    });
+    var bb = [1e9, 1e9, -1e9, -1e9];
+    out.forEach(function (g) {
+      g.prims = [].concat.apply([], g.shapes.map(prim)).filter(Boolean);
+      g.prims.forEach(function (p) { bb[0] = Math.min(bb[0], p.bb[0]); bb[1] = Math.min(bb[1], p.bb[1]); bb[2] = Math.max(bb[2], p.bb[2]); bb[3] = Math.max(bb[3], p.bb[3]); });
+    });
+    lesson._m = { groups: out, bb: bb, det: extra.concat(parseShapes(lesson.d)) };
+    return lesson._m;
+  }
+
+  /* ---------- drawing pieces ---------- */
+  function segFill(p, color, grow) {
+    // one limb as filled/stroked elements in a single colour (grow widens it for the outline pass)
+    var o = '', i, pts = p.pts, n = pts.length;
+    if (Math.abs(p.w1 - p.w2) < 0.01) {
+      return '<path d="' + polyPath(pts, 0) + '" fill="none" stroke="' + color + '" stroke-width="' + f(p.w1 + grow) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+    }
+    for (i = 0; i < n - 1; i++) {
+      var wa = p.w1 + (p.w2 - p.w1) * i / (n - 1) + grow, wb = p.w1 + (p.w2 - p.w1) * (i + 1) / (n - 1) + grow;
+      var ax = pts[i][0], ay = pts[i][1], bx = pts[i + 1][0], by = pts[i + 1][1];
+      var dx = bx - ax, dy = by - ay, L = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / L, ny = dx / L;
+      o += '<path d="M' + f(ax + nx * wa / 2) + ' ' + f(ay + ny * wa / 2) + 'L' + f(bx + nx * wb / 2) + ' ' + f(by + ny * wb / 2) +
+        'L' + f(bx - nx * wb / 2) + ' ' + f(by - ny * wb / 2) + 'L' + f(ax - nx * wa / 2) + ' ' + f(ay - ny * wa / 2) + 'Z"/>';
+      o += '<circle cx="' + f(ax) + '" cy="' + f(ay) + '" r="' + f(wa / 2) + '"/>';
+      if (i === n - 2) o += '<circle cx="' + f(bx) + '" cy="' + f(by) + '" r="' + f(wb / 2) + '"/>';
+    }
+    return '<g fill="' + color + '" stroke="none">' + o + '</g>';
+  }
+  function segStripe(p, color) {
+    var w = (p.w1 + p.w2) / 2, off = w * 0.2;
+    var pts = p.pts.map(function (q) { return [q[0] + off, q[1] + off]; });
+    return '<path d="' + polyPath(pts, 0) + '" fill="none" stroke="' + color + '" stroke-opacity=".55" stroke-width="' + f(w * 0.42) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+  }
+  function gradDefs(id, C) {
+    var light = mix(C, '#ffffff', 0.78), dark = mix(C, '#1a1410', 0.42), dark2 = mix(C, '#1a1410', 0.28);
+    return '<radialGradient id="r' + id + '" cx=".33" cy=".28" r=".85"><stop offset="0" stop-color="' + light + '"/><stop offset=".5" stop-color="' + C +
+      '"/><stop offset="1" stop-color="' + dark + '"/></radialGradient><linearGradient id="l' + id + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' +
+      light + '"/><stop offset=".55" stop-color="' + C + '"/><stop offset="1" stop-color="' + dark2 + '"/></linearGradient>';
+  }
+
+  /* forms: mode 'line' (outline only, white fill), 'shade' (grey forms), 'color' */
+  function drawForms(m, lesson, mode, edge) {
+    var o = '', defs = '', ow = 0.9, n = m.groups.length;
+    m.groups.forEach(function (g, gi) {
+      var C, id = 'g' + (++uid), fillBlob, fillSeg, stripe = null;
+      if (mode === 'line') { fillBlob = function () { return PAPER; }; fillSeg = PAPER; }
+      else {
+        if (mode === 'color') C = g.col || lesson.k || '#e9b44c';
+        else { C = '#cbc7c1'; if (lesson.ls) C = mix('#e4e1dc', '#a9a49d', n > 1 ? gi / (n - 1) : 0.5); }
+        if (mode === 'shade' && g.col === '#fff') C = '#f1efec';
+        defs += gradDefs(id, C);
+        fillBlob = function (p) { return 'url(#' + (p.round ? 'r' : 'l') + id + ')'; };
+        fillSeg = mix(C, '#ffffff', 0.3); stripe = mix(C, '#1a1410', 0.4);
+      }
+      var A = '', B = '', S = '';
+      g.prims.forEach(function (p) {
+        if (p.t === 'blob') {
+          A += '<path d="' + p.d + '" fill="' + edge + '" stroke="' + edge + '" stroke-width="' + (ow * 2) + '" stroke-linejoin="round"/>';
+          B += '<path d="' + p.d + '" fill="' + fillBlob(p) + '"/>';
+        } else {
+          A += segFill(p, edge, ow * 2); B += segFill(p, fillSeg, 0);
+          if (stripe && (p.w1 + p.w2) / 2 <= 11) S += segStripe(p, stripe);
+        }
+      });
+      o += g.sep ? '' : A + B + S;
+      if (g.sep) g.prims.forEach(function (p) {
+        if (p.t === 'blob') o += '<path d="' + p.d + '" fill="' + fillBlob(p) + '" stroke="' + edge + '" stroke-width="' + ow + '" stroke-linejoin="round"/>';
+        else o += segFill(p, edge, ow * 2) + segFill(p, fillSeg, 0) + (stripe && (p.w1 + p.w2) / 2 <= 11 ? segStripe(p, stripe) : '');
+      });
+    });
+    return { defs: defs, body: o };
+  }
+  function drawConstruction(m, lesson, level, colMain, colRest) {
+    // level 1 = main bubbles only, 2 = everything
+    var o = '';
+    m.groups.forEach(function (g) {
+      g.prims.forEach(function (p) {
+        if (p.t === 'blob') {
+          if (p.main) o += '<path d="' + p.d + '" fill="none" stroke="' + colMain + '" stroke-width=".75"/>';
+          else if (level > 1) o += '<path d="' + p.d + '" fill="none" stroke="' + colRest + '" stroke-width=".75" stroke-linejoin="round"/>';
+        } else if (level > 1) {
+          o += '<path d="' + polyPath(p.pts, 0) + '" fill="none" stroke="' + colRest + '" stroke-width=".9" stroke-linecap="round"/>';
+          p.ctrl.forEach(function (q) { o += '<circle cx="' + f(q[0]) + '" cy="' + f(q[1]) + '" r=".9" fill="' + colRest + '"/>'; });
+        }
+      });
+    });
+    return o;
+  }
+  function drawDetails(det, col) {
+    var o = '', st = ' fill="none" stroke="' + col + '" stroke-width=".8" stroke-linecap="round" stroke-linejoin="round"';
+    var wf = ' fill="#ffffff" stroke="' + col + '" stroke-width=".7" stroke-linejoin="round"';
+    det.forEach(function (s) {
+      var a = s.a, k = s.k;
+      if (k === 'c') o += '<circle cx="' + a[0] + '" cy="' + a[1] + '" r="' + a[2] + '"' + st + '/>';
+      else if (k === 'C') o += '<circle cx="' + a[0] + '" cy="' + a[1] + '" r="' + a[2] + '" fill="' + col + '"/>';
+      else if (k === 'o') o += '<circle cx="' + a[0] + '" cy="' + a[1] + '" r="' + a[2] + '"' + wf + '/>';
+      else if (k === 'e') o += '<path d="' + ellipsePath(a[0], a[1], a[2], a[3], a[4]) + '"' + st + '/>';
+      else if (k === 'E') o += '<path d="' + ellipsePath(a[0], a[1], a[2], a[3], a[4]) + '" fill="' + col + '"/>';
+      else if (k === 'O') o += '<path d="' + ellipsePath(a[0], a[1], a[2], a[3], a[4]) + '"' + wf + '/>';
+      else if (k === 'l') o += '<path d="M' + a[0] + ' ' + a[1] + 'L' + a[2] + ' ' + a[3] + '"' + st + '/>';
+      else if (k === 'q') o += '<path d="M' + a[0] + ' ' + a[1] + 'Q' + a[2] + ' ' + a[3] + ' ' + a[4] + ' ' + a[5] + '"' + st + '/>';
+      else if (k === 'p') o += '<path d="' + polyPath(pairs(a), 0) + '"' + st + '/>';
+      else if (k === 'P') o += '<path d="' + polyPath(pairs(a), 1) + '" fill="' + col + '" stroke="' + col + '" stroke-width=".4" stroke-linejoin="round"/>';
+      else if (k === 'g') o += '<path d="' + polyPath(pairs(a), 1) + '"' + wf + '/>';
+      else if (k === 's') o += '<path d="' + polyPath(splinePts(pairs(a)), 0) + '"' + st + '/>';
+      else if (k === 'a') o += '<path d="' + polyPath(arcPts(a[0], a[1], a[2], a[3], a[4]), 0) + '"' + st + '/>';
+      else if (k === 'h') { for (var j = 0; j < a[4]; j++) o += '<path d="M' + f(a[0] + j * a[5]) + ' ' + f(a[1] + j * a[6]) + 'L' + f(a[2] + j * a[5]) + ' ' + f(a[3] + j * a[6]) + '"' + st + '/>'; }
+      else if (k === 'H') {
+        var x0 = a[0] - a[2] / 2, x1 = a[0] + a[2] / 2, y0 = a[1] - a[3] / 2, y1 = a[1] + a[3] / 2, c, xa, xb;
+        if (a[5] >= 0) for (c = x0 + y0 + a[4]; c < x1 + y1 - 0.01; c += a[4]) { xa = Math.max(x0, c - y1); xb = Math.min(x1, c - y0); o += '<path d="M' + f(xa) + ' ' + f(c - xa) + 'L' + f(xb) + ' ' + f(c - xb) + '"' + st + '/>'; }
+        else for (c = x0 - y1 + a[4]; c < x1 - y0 - 0.01; c += a[4]) { xa = Math.max(x0, c + y0); xb = Math.min(x1, c + y1); o += '<path d="M' + f(xa) + ' ' + f(xa - c) + 'L' + f(xb) + ' ' + f(xb - c) + '"' + st + '/>'; }
+      }
+      else if (k === 'r') { for (var i = 0; i < a[4]; i++) { var u = ((a[5] || 0) + i * 360 / a[4]) * Math.PI / 180; o += '<path d="M' + f(a[0] + a[2] * Math.cos(u)) + ' ' + f(a[1] + a[2] * Math.sin(u)) + 'L' + f(a[0] + a[3] * Math.cos(u)) + ' ' + f(a[1] + a[3] * Math.sin(u)) + '"' + st + '/>'; } }
+    });
+    return o;
+  }
+  function sunIcon(x, y) {
+    var o = '<g stroke="' + SUN + '" stroke-width="1" stroke-linecap="round"><circle cx="' + x + '" cy="' + y + '" r="3.6" fill="#ffd66b"/>';
+    for (var i = 0; i < 8; i++) { var t = i * Math.PI / 4; o += '<path d="M' + f(x + 5.2 * Math.cos(t)) + ' ' + f(y + 5.2 * Math.sin(t)) + 'L' + f(x + 7.4 * Math.cos(t)) + ' ' + f(y + 7.4 * Math.sin(t)) + '"/>'; }
+    return o + '</g>';
+  }
+  function groundShadow(m, lesson) {
+    if (lesson.ls || lesson.sh === 0) return '';
+    var b = m.bb, s = lesson.sh;
+    var cx = s ? s[0] : (b[0] + b[2]) / 2 + 5, cy = s ? s[1] : Math.min(b[3] - 0.5, 96), rx = s ? s[2] : (b[2] - b[0]) * 0.46, ry = s ? s[3] : 2.4;
+    return '<ellipse cx="' + f(cx) + '" cy="' + f(cy) + '" rx="' + f(rx) + '" ry="' + f(ry) + '" fill="#57514b" opacity=".34"/>';
+  }
+  function frameBits(lesson, stage) {
+    if (!lesson.ls) return { pre: '', post: '', clip: '' };
+    var id = 'c' + (++uid), sky = '';
+    if (stage === 'shd') sky = '<rect x="3" y="3" width="94" height="94" fill="#efedea"/>';
+    if (stage === 'col') sky = '<rect x="3" y="3" width="94" height="94" fill="' + (lesson.sky || '#cfe8fb') + '"/>';
+    return {
+      clip: '<clipPath id="' + id + '"><rect x="3" y="3" width="94" height="94"/></clipPath>', id: id, pre: sky,
+      post: '<rect x="3" y="3" width="94" height="94" fill="none" stroke="' + INK + '" stroke-width="1"/>'
+    };
+  }
+
+  /* ---------- custom (art basics) layers ---------- */
+  function drawLayers(layers, lesson) {
+    var o = '', defs = '';
+    layers.forEach(function (L) {
+      var mode = L[0], dsl = L[1];
+      if (mode === 'sun') { var q = dsl.split(','); o += sunIcon(+q[0], +q[1]); return; }
+      if (mode === 'txt') {
+        dsl.split(';').forEach(function (t) { var q = t.split(','); o += '<text x="' + q[0] + '" y="' + q[1] + '" font-size="' + (q[3] || 4.2) + '" text-anchor="middle" fill="#5b6470" font-family="Lexend, sans-serif" font-weight="600">' + q[2] + '</text>'; });
+        return;
+      }
+      if (mode === 'det' || mode === 'new' || mode === 'faint') { o += drawDetails(parseShapes(dsl), mode === 'det' ? INK : mode === 'new' ? NEW : OLD); return; }
+      var fake = { f: dsl, ls: 0, face: 0, hair: 0 }; if (L[2]) fake.fig = L[2];
+      var m = model(fake);
+      if (mode === 'con') o += drawConstruction(m, fake, 2, NEW, NEW);
+      else if (mode === 'old') o += drawConstruction(m, fake, 2, OLD, OLD);
+      else if (mode === 'out') { o += drawForms(m, fake, 'line', INK).body; }
+      else if (mode === 'outnew') { o += drawForms(m, fake, 'line', NEW).body; }
+      else if (mode === 'sh') { var r = drawForms(m, fake, 'shade', INK); defs += r.defs; o += r.body; }
+      else if (mode === 'shflip') { var r2 = drawForms(m, fake, 'shade', INK); defs += r2.defs; o += '<g transform="translate(100,0) scale(-1,1)">' + r2.body + '</g>'; }
+      else if (mode.indexOf('fill:') === 0) {
+        var tf = mix('#ffffff', '#2f2b28', +mode.slice(5));
+        m.groups.forEach(function (g) { g.prims.forEach(function (p) { if (p.t === 'blob') o += '<path d="' + p.d + '" fill="' + tf + '"/>'; else o += segFill(p, tf, 0); }); });
+      }
+      else if (mode === 'shadow') { m.groups.forEach(function (g) { g.prims.forEach(function (p) { if (p.t === 'blob') o += '<path d="' + p.d + '" fill="#57514b" opacity=".36"/>'; }); }); }
+      else if (mode.indexOf('tone:') === 0) {
+        var tone = mix('#ffffff', '#2f2b28', +mode.slice(5));
+        m.groups.forEach(function (g) { g.prims.forEach(function (p) { if (p.t === 'blob') o += '<path d="' + p.d + '" fill="' + tone + '" stroke="' + INK + '" stroke-width=".7" stroke-linejoin="round"/>'; else o += segFill(p, tone, 0); }); });
+      }
+    });
+    return { defs: defs, body: o };
+  }
+
+  /* ---------- public: steps + svg ---------- */
+  var TEXT = {
+    form: [
+      ['Bubbles', 'Draw light bubbles for the big parts. Press softly. These are helper lines.', 'pencil'],
+      ['Sticks', 'Add stick lines and small shapes for the legs, arms, tails and ears.', 'pencil'],
+      ['Outline', 'Go around your bubbles and sticks with one smooth, darker line.', 'pencil'],
+      ['Details', 'Add the details. Then erase the helper lines you do not need.', 'pen'],
+      ['Shading', 'The sun is at the top left. Shade the side away from the sun. Put a shadow on the ground.', 'shader'],
+      ['Color', 'Add color if you like. Keep the shaded side darker.', 'marker']
+    ],
+    land: [
+      ['Big shapes', 'Draw the frame and the big round shapes first. Press softly.', 'pencil'],
+      ['More shapes', 'Add the pointy shapes and the stick lines.', 'pencil'],
+      ['Outline', 'Outline everything. Things in front cover the things behind them.', 'pencil'],
+      ['Details', 'Add details and texture. Erase helper lines you do not need.', 'pen'],
+      ['Shading', 'Far away things are light. Close things are dark. That makes your picture look deep.', 'shader'],
+      ['Color', 'Add color if you like. Use lighter colors far away.', 'paint']
+    ]
+  };
+  var STAGES = ['bub', 'stk', 'out', 'det', 'shd', 'col'];
+
+  function steps(lesson) {
+    if (lesson.custom) return lesson.custom.map(function (s) { return { name: s.h, text: s.t, tool: s.tool || 'pencil' }; });
+    var T = lesson.ls ? TEXT.land : TEXT.form;
+    return T.map(function (t, i) {
+      var text = t[1];
+      if (i === 0 && lesson.n) text = lesson.n + ' ' + (lesson.ls ? 'Press softly.' : 'Press softly. These are helper lines.');
+      if (i === 3 && lesson.dn) text = lesson.dn + ' Then erase the helper lines you do not need.';
+      if (i === 4 && lesson.sn) text = lesson.sn;
+      return { name: t[0], text: text, tool: t[2] };
+    });
+  }
+
+  function inner(lesson, step) {
+    if (lesson.custom) {
+      var r0 = drawLayers(lesson.custom[Math.min(step, lesson.custom.length - 1)].L, lesson);
+      return (r0.defs ? '<defs>' + r0.defs + '</defs>' : '') + r0.body;
+    }
+    var m = model(lesson), stage = STAGES[Math.max(0, Math.min(step, 5))];
+    var fr = frameBits(lesson, stage), o = '', defs = fr.clip, body = '';
+    var hz = lesson.hz ? '<path d="M3 ' + lesson.hz + 'L97 ' + lesson.hz + '" stroke="' + (stage === 'bub' ? NEW : OLD) + '" stroke-width=".7" stroke-dasharray="2 1.6"/>' : '';
+    if (stage === 'bub') body = hz + drawConstruction(m, lesson, 1, NEW, NEW);
+    else if (stage === 'stk') body = hz + drawConstruction(m, lesson, 2, OLD, NEW);
+    else if (stage === 'out') body = drawForms(m, lesson, 'line', NEW).body + '<g opacity=".7">' + drawConstruction(m, lesson, 2, OLD, OLD) + '</g>';
+    else if (stage === 'det') body = drawForms(m, lesson, 'line', INK).body + drawDetails(m.det, NEW);
+    else {
+      var r = drawForms(m, lesson, stage === 'shd' ? 'shade' : 'color', INK);
+      defs += r.defs;
+      body = groundShadow(m, lesson) + r.body + drawDetails(m.det, stage === 'col' && lesson.dk ? '#f3ecd0' : INK);
+    }
+    if (lesson.ls) body = fr.pre + '<g clip-path="url(#' + fr.id + ')">' + body + '</g>' + fr.post;
+    else if (stage === 'shd') body += sunIcon(10, 10);
+    return (defs ? '<defs>' + defs + '</defs>' : '') + body;
+  }
+  function svg(lesson, step, cls) {
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"' + (cls ? ' class="' + cls + '"' : '') + '>' + inner(lesson, step) + '</svg>';
+  }
+  function thumb(lesson) {
+    var n = lesson.custom ? lesson.custom.length - 1 : 5;
+    return svg(lesson, n, 'thumb');
+  }
+
+  root.Guide = { steps: steps, svg: svg, inner: inner, thumb: thumb, mix: mix };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* l_realism */
+(function(root){root.LESSON_SETS=root.LESSON_SETS||{};
+root.LESSON_SETS.basics=[{"t":"Realistic Apple","lv":1,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Observe the asymmetry of a real apple; measure width against height. Use the Photo button to upload or find a real subject.","L":[["con","c50,52,23 e50,76,17,4"]]},{"h":"2 · Construct accurate forms","t":"Place the stem and shoulder indent; compare left and right contours.","L":[["old","c50,52,23 e50,76,17,4"],["new","p42,30,49,26,56,30 l50,29,53,22"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Place the stem and shoulder indent; compare left and right contours.","L":[["out","c50,52,23 e50,76,17,4"],["det","p42,30,49,26,56,30 l50,29,53,22"]]},{"h":"4 · Light and material","t":"Separate the lit side, midtone and core shadow into three values.","L":[["sh","c50,52,23 e50,76,17,4"],["det","p42,30,49,26,56,30 l50,29,53,22"]]},{"h":"5 · Expert finishing","t":"Build reflected light and a soft cast shadow; keep the highlight clean. Compare your result with the reference and correct the three largest differences.","L":[["sh","c50,52,23 e50,76,17,4"],["det","p42,30,49,26,56,30 l50,29,53,22"],["det","e45,45,6,8"]]}]},{"t":"Glass of Water","lv":1,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Draw the rim as an ellipse, not a pointed oval. Use the Photo button to upload or find a real subject.","L":[["con","p34,22,66,22,62,82,38,82,34,22 e50,22,16,4"]]},{"h":"2 · Construct accurate forms","t":"Check that both sides converge toward the base symmetrically.","L":[["old","p34,22,66,22,62,82,38,82,34,22 e50,22,16,4"],["new","e50,82,12,3 l38,58,62,58"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Check that both sides converge toward the base symmetrically.","L":[["out","p34,22,66,22,62,82,38,82,34,22 e50,22,16,4"],["det","e50,82,12,3 l38,58,62,58"]]},{"h":"4 · Light and material","t":"Use white paper for specular highlights; shade only the glass edges.","L":[["sh","p34,22,66,22,62,82,38,82,34,22 e50,22,16,4"],["det","e50,82,12,3 l38,58,62,58"]]},{"h":"5 · Expert finishing","t":"Draw the waterline ellipse and refracted background edges. Compare your result with the reference and correct the three largest differences.","L":[["sh","p34,22,66,22,62,82,38,82,34,22 e50,22,16,4"],["det","e50,82,12,3 l38,58,62,58"],["det","l39,29,39,73 l60,29,60,73"]]}]},{"t":"Ceramic Mug","lv":1,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Use a centerline to keep the rim and base aligned. Use the Photo button to upload or find a real subject.","L":[["con","e50,26,24,7 p26,26,74,26,70,80,30,80,26,26"]]},{"h":"2 · Construct accurate forms","t":"Draw the handle as a three-dimensional loop.","L":[["old","e50,26,24,7 p26,26,74,26,70,80,30,80,26,26"],["new","e50,80,20,5 e76,49,14,19"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Draw the handle as a three-dimensional loop.","L":[["out","e50,26,24,7 p26,26,74,26,70,80,30,80,26,26"],["det","e50,80,20,5 e76,49,14,19"]]},{"h":"4 · Light and material","t":"Keep the highlight consistent with the light direction.","L":[["sh","e50,26,24,7 p26,26,74,26,70,80,30,80,26,26"],["det","e50,80,20,5 e76,49,14,19"]]},{"h":"5 · Expert finishing","t":"Differentiate ceramic, interior darkness and cast shadow. Compare your result with the reference and correct the three largest differences.","L":[["sh","e50,26,24,7 p26,26,74,26,70,80,30,80,26,26"],["det","e50,80,20,5 e76,49,14,19"],["det","e50,26,18,4 l31,43,31,67"]]}]},{"t":"Chrome Sphere","lv":4,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Begin with an exact sphere and mark the horizon reflection. Use the Photo button to upload or find a real subject.","L":[["con","c50,52,30"]]},{"h":"2 · Construct accurate forms","t":"Map large abstract reflection shapes before details.","L":[["old","c50,52,30"],["new","e50,52,23,24"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Map large abstract reflection shapes before details.","L":[["out","c50,52,30"],["det","e50,52,23,24"]]},{"h":"4 · Light and material","t":"Push adjacent values from near-white to near-black.","L":[["sh","c50,52,30"],["det","e50,52,23,24"]]},{"h":"5 · Expert finishing","t":"Sharpen a few reflection boundaries and soften the rest. Compare your result with the reference and correct the three largest differences.","L":[["sh","c50,52,30"],["det","e50,52,23,24"],["det","e39,38,10,6 e61,68,16,8"]]}]},{"t":"Photorealistic Still Life","lv":5,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Arrange three objects with overlapping silhouettes and a clear focal point. Use the Photo button to upload or find a real subject.","L":[["con","e32,64,16,18 e69,68,13,13 p43,29,58,25,67,55,49,60,43,29"]]},{"h":"2 · Construct accurate forms","t":"Measure all ellipses and negative spaces from one viewpoint.","L":[["old","e32,64,16,18 e69,68,13,13 p43,29,58,25,67,55,49,60,43,29"],["new","e32,64,10,12 e69,68,8,8"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Measure all ellipses and negative spaces from one viewpoint.","L":[["out","e32,64,16,18 e69,68,13,13 p43,29,58,25,67,55,49,60,43,29"],["det","e32,64,10,12 e69,68,8,8"]]},{"h":"4 · Light and material","t":"Render each material differently: matte, glossy and translucent.","L":[["sh","e32,64,16,18 e69,68,13,13 p43,29,58,25,67,55,49,60,43,29"],["det","e32,64,10,12 e69,68,8,8"]]},{"h":"5 · Expert finishing","t":"Unify the cast shadows and check the whole value range. Compare your result with the reference and correct the three largest differences.","L":[["sh","e32,64,16,18 e69,68,13,13 p43,29,58,25,67,55,49,60,43,29"],["det","e32,64,10,12 e69,68,8,8"],["det","l10,86,91,86"]]}]}];
+root.LESSON_SETS.animals=[{"t":"Dog Portrait","lv":2,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Compare muzzle length with skull width; mark eye alignment. Use the Photo button to upload or find a real subject.","L":[["con","e50,47,25,29 e50,67,14,12"]]},{"h":"2 · Construct accurate forms","t":"Place ears on the skull rather than attaching them flat.","L":[["old","e50,47,25,29 e50,67,14,12"],["new","e31,31,10,21,-25 e69,31,10,21,25 c41,47,3 c59,47,3"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Place ears on the skull rather than attaching them flat.","L":[["out","e50,47,25,29 e50,67,14,12"],["det","e31,31,10,21,-25 e69,31,10,21,25 c41,47,3 c59,47,3"]]},{"h":"4 · Light and material","t":"Model the brow, nose and cheek volumes using light.","L":[["sh","e50,47,25,29 e50,67,14,12"],["det","e31,31,10,21,-25 e69,31,10,21,25 c41,47,3 c59,47,3"]]},{"h":"5 · Expert finishing","t":"Layer fur in the direction it grows, varying edge softness. Compare your result with the reference and correct the three largest differences.","L":[["sh","e50,47,25,29 e50,67,14,12"],["det","e31,31,10,21,-25 e69,31,10,21,25 c41,47,3 c59,47,3"],["det","p43,66,50,73,57,66 q39,77,50,81,61,77"]]}]},{"t":"Horse Head","lv":2,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Locate the long muzzle, cheek mass and ear bases. Use the Photo button to upload or find a real subject.","L":[["con","p36,17,62,22,70,52,62,80,47,90,34,72,31,41,36,17"]]},{"h":"2 · Construct accurate forms","t":"Observe how the jaw tapers into the nose.","L":[["old","p36,17,62,22,70,52,62,80,47,90,34,72,31,41,36,17"],["new","p35,20,24,6,27,42 p60,21,72,7,67,43 c42,43,3"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Observe how the jaw tapers into the nose.","L":[["out","p36,17,62,22,70,52,62,80,47,90,34,72,31,41,36,17"],["det","p35,20,24,6,27,42 p60,21,72,7,67,43 c42,43,3"]]},{"h":"4 · Light and material","t":"Use planar shading for the cheek and eye socket.","L":[["sh","p36,17,62,22,70,52,62,80,47,90,34,72,31,41,36,17"],["det","p35,20,24,6,27,42 p60,21,72,7,67,43 c42,43,3"]]},{"h":"5 · Expert finishing","t":"Draw mane clumps as masses before individual hairs. Compare your result with the reference and correct the three largest differences.","L":[["sh","p36,17,62,22,70,52,62,80,47,90,34,72,31,41,36,17"],["det","p35,20,24,6,27,42 p60,21,72,7,67,43 c42,43,3"],["det","e53,76,13,8 l37,55,46,61"]]}]},{"t":"Realistic Cat Fur","lv":4,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Measure the eye spacing and triangular ear geometry. Use the Photo button to upload or find a real subject.","L":[["con","e50,48,25,28 p28,34,24,12,44,26 p56,26,76,12,72,34"]]},{"h":"2 · Construct accurate forms","t":"Group fur into major light and dark masses.","L":[["old","e50,48,25,28 p28,34,24,12,44,26 p56,26,76,12,72,34"],["new","e42,49,4,6 e58,49,4,6 p45,66,50,70,55,66"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Group fur into major light and dark masses.","L":[["out","e50,48,25,28 p28,34,24,12,44,26 p56,26,76,12,72,34"],["det","e42,49,4,6 e58,49,4,6 p45,66,50,70,55,66"]]},{"h":"4 · Light and material","t":"Layer strokes along the growth direction, never random scribbles.","L":[["sh","e50,48,25,28 p28,34,24,12,44,26 p56,26,76,12,72,34"],["det","e42,49,4,6 e58,49,4,6 p45,66,50,70,55,66"]]},{"h":"5 · Expert finishing","t":"Control hard whisker edges against soft cheek fur. Compare your result with the reference and correct the three largest differences.","L":[["sh","e50,48,25,28 p28,34,24,12,44,26 p56,26,76,12,72,34"],["det","e42,49,4,6 e58,49,4,6 p45,66,50,70,55,66"],["det","l32,65,12,60 l68,65,88,60 l32,70,12,75 l68,70,88,75"]]}]},{"t":"Wildlife Masterpiece","lv":5,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Select a high-resolution animal photograph with a clear light source. Use the Photo button to upload or find a real subject.","L":[["con","e49,48,25,26 e49,71,14,11 p27,34,20,15,43,27 p55,27,79,15,72,34"]]},{"h":"2 · Construct accurate forms","t":"Measure anatomy, asymmetry and overlapping fur masses.","L":[["old","e49,48,25,26 e49,71,14,11 p27,34,20,15,43,27 p55,27,79,15,72,34"],["new","e40,48,4,3 e58,48,4,3 p43,69,50,75,57,69"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Measure anatomy, asymmetry and overlapping fur masses.","L":[["out","e49,48,25,26 e49,71,14,11 p27,34,20,15,43,27 p55,27,79,15,72,34"],["det","e40,48,4,3 e58,48,4,3 p43,69,50,75,57,69"]]},{"h":"4 · Light and material","t":"Separate fur texture from the underlying skull and muscle volumes.","L":[["sh","e49,48,25,26 e49,71,14,11 p27,34,20,15,43,27 p55,27,79,15,72,34"],["det","e40,48,4,3 e58,48,4,3 p43,69,50,75,57,69"]]},{"h":"5 · Expert finishing","t":"Refine only focal areas to create convincing photographic depth. Compare your result with the reference and correct the three largest differences.","L":[["sh","e49,48,25,26 e49,71,14,11 p27,34,20,15,43,27 p55,27,79,15,72,34"],["det","e40,48,4,3 e58,48,4,3 p43,69,50,75,57,69"],["det","l25,60,12,55 l73,60,87,55"]]}]}];
+root.LESSON_SETS.people=[{"t":"Human Eye Study","lv":2,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Compare eyelid angles and tear-duct placement from a photo. Use the Photo button to upload or find a real subject.","L":[["con","p13,50,32,35,67,35,87,50,66,64,32,64,13,50 c50,50,14"]]},{"h":"2 · Construct accurate forms","t":"Wrap the lids around the eyeball; avoid an almond symbol.","L":[["old","p13,50,32,35,67,35,87,50,66,64,32,64,13,50 c50,50,14"],["new","c50,50,7 q18,39,50,29,82,39 q20,65,50,71,80,65"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Wrap the lids around the eyeball; avoid an almond symbol.","L":[["out","p13,50,32,35,67,35,87,50,66,64,32,64,13,50 c50,50,14"],["det","c50,50,7 q18,39,50,29,82,39 q20,65,50,71,80,65"]]},{"h":"4 · Light and material","t":"Build the iris with radial value shifts and a dark pupil.","L":[["sh","p13,50,32,35,67,35,87,50,66,64,32,64,13,50 c50,50,14"],["det","c50,50,7 q18,39,50,29,82,39 q20,65,50,71,80,65"]]},{"h":"5 · Expert finishing","t":"Render lashes in groups and preserve wet highlights. Compare your result with the reference and correct the three largest differences.","L":[["sh","p13,50,32,35,67,35,87,50,66,64,32,64,13,50 c50,50,14"],["det","c50,50,7 q18,39,50,29,82,39 q20,65,50,71,80,65"],["det","l22,43,31,39 l70,39,79,43"]]}]},{"t":"Portrait Nose","lv":2,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Measure bridge length and nose width relative to the eyes. Use the Photo button to upload or find a real subject.","L":[["con","p50,19,43,53,34,70,47,78,62,75,68,68,55,51,50,19"]]},{"h":"2 · Construct accurate forms","t":"Think of the bridge and tip as connected planes.","L":[["old","p50,19,43,53,34,70,47,78,62,75,68,68,55,51,50,19"],["new","e40,70,6,4 e60,70,6,4"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Think of the bridge and tip as connected planes.","L":[["out","p50,19,43,53,34,70,47,78,62,75,68,68,55,51,50,19"],["det","e40,70,6,4 e60,70,6,4"]]},{"h":"4 · Light and material","t":"Shade the underside and side planes without heavy outlines.","L":[["sh","p50,19,43,53,34,70,47,78,62,75,68,68,55,51,50,19"],["det","e40,70,6,4 e60,70,6,4"]]},{"h":"5 · Expert finishing","t":"Use soft transitions for cartilage and reflected light. Compare your result with the reference and correct the three largest differences.","L":[["sh","p50,19,43,53,34,70,47,78,62,75,68,68,55,51,50,19"],["det","e40,70,6,4 e60,70,6,4"],["det","q36,76,50,82,64,76"]]}]},{"t":"Realistic Lips","lv":2,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Map the corners and the cupid’s bow from reference. Use the Photo button to upload or find a real subject.","L":[["con","p20,51,36,42,48,46,55,42,80,51,56,67,42,67,20,51"]]},{"h":"2 · Construct accurate forms","t":"Use the center seam to describe lip curvature.","L":[["old","p20,51,36,42,48,46,55,42,80,51,56,67,42,67,20,51"],["new","q21,52,50,55,79,52"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Use the center seam to describe lip curvature.","L":[["out","p20,51,36,42,48,46,55,42,80,51,56,67,42,67,20,51"],["det","q21,52,50,55,79,52"]]},{"h":"4 · Light and material","t":"Keep the upper lip usually darker than the lower lip.","L":[["sh","p20,51,36,42,48,46,55,42,80,51,56,67,42,67,20,51"],["det","q21,52,50,55,79,52"]]},{"h":"5 · Expert finishing","t":"Add small specular accents and avoid outlining every edge. Compare your result with the reference and correct the three largest differences.","L":[["sh","p20,51,36,42,48,46,55,42,80,51,56,67,42,67,20,51"],["det","q21,52,50,55,79,52"],["det","q35,59,48,62,65,58"]]}]},{"t":"Portrait Head Planes","lv":3,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Use skull height and width to establish proportion. Use the Photo button to upload or find a real subject.","L":[["con","e50,42,25,31 p30,48,38,78,50,90,63,78,70,48"]]},{"h":"2 · Construct accurate forms","t":"Locate brow, nose and chin landmarks before details.","L":[["old","e50,42,25,31 p30,48,38,78,50,90,63,78,70,48"],["new","l25,43,75,43 l50,14,50,88"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Locate brow, nose and chin landmarks before details.","L":[["out","e50,42,25,31 p30,48,38,78,50,90,63,78,70,48"],["det","l25,43,75,43 l50,14,50,88"]]},{"h":"4 · Light and material","t":"Group forehead, cheeks and jaw into light-facing planes.","L":[["sh","e50,42,25,31 p30,48,38,78,50,90,63,78,70,48"],["det","l25,43,75,43 l50,14,50,88"]]},{"h":"5 · Expert finishing","t":"Blend halftones without losing the structural planes. Compare your result with the reference and correct the three largest differences.","L":[["sh","e50,42,25,31 p30,48,38,78,50,90,63,78,70,48"],["det","l25,43,75,43 l50,14,50,88"],["det","l34,59,46,60 l54,60,66,59"]]}]},{"t":"Realistic Hand","lv":3,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Block the palm as a wedge and fingers as tapered cylinders. Use the Photo button to upload or find a real subject.","L":[["con","p28,93,25,61,18,48,24,42,36,55,35,19,42,16,45,51,48,11,55,11,55,51,63,19,70,23,65,60,78,40,83,47,67,77,60,93,28,93"]]},{"h":"2 · Construct accurate forms","t":"Check knuckle arcs and finger-length relationships.","L":[["old","p28,93,25,61,18,48,24,42,36,55,35,19,42,16,45,51,48,11,55,11,55,51,63,19,70,23,65,60,78,40,83,47,67,77,60,93,28,93"],["new","l39,58,53,68 l34,72,61,72"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Check knuckle arcs and finger-length relationships.","L":[["out","p28,93,25,61,18,48,24,42,36,55,35,19,42,16,45,51,48,11,55,11,55,51,63,19,70,23,65,60,78,40,83,47,67,77,60,93,28,93"],["det","l39,58,53,68 l34,72,61,72"]]},{"h":"4 · Light and material","t":"Shade finger joints with gradual transitions, not dark rings.","L":[["sh","p28,93,25,61,18,48,24,42,36,55,35,19,42,16,45,51,48,11,55,11,55,51,63,19,70,23,65,60,78,40,83,47,67,77,60,93,28,93"],["det","l39,58,53,68 l34,72,61,72"]]},{"h":"5 · Expert finishing","t":"Reserve strongest contrast for overlaps and contact shadows. Compare your result with the reference and correct the three largest differences.","L":[["sh","p28,93,25,61,18,48,24,42,36,55,35,19,42,16,45,51,48,11,55,11,55,51,63,19,70,23,65,60,78,40,83,47,67,77,60,93,28,93"],["det","l39,58,53,68 l34,72,61,72"],["det","l42,51,42,61 l54,51,54,61"]]}]},{"t":"Tennis Player in Motion","lv":3,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Find the action line through torso, hips and planted leg. Use the Photo button to upload or find a real subject.","L":[["con","c50,17,8 l50,26,45,55,7 l42,35,27,47,4 l54,35,76,22,4 l45,55,30,77,4 l45,55,65,78,4"]]},{"h":"2 · Construct accurate forms","t":"Balance shoulder and pelvis tilts to show weight shift.","L":[["old","c50,17,8 l50,26,45,55,7 l42,35,27,47,4 l54,35,76,22,4 l45,55,30,77,4 l45,55,65,78,4"],["new","e82,18,11,16,35 l76,22,78,21"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Balance shoulder and pelvis tilts to show weight shift.","L":[["out","c50,17,8 l50,26,45,55,7 l42,35,27,47,4 l54,35,76,22,4 l45,55,30,77,4 l45,55,65,78,4"],["det","e82,18,11,16,35 l76,22,78,21"]]},{"h":"4 · Light and material","t":"Connect limbs with muscle volumes, not stick outlines.","L":[["sh","c50,17,8 l50,26,45,55,7 l42,35,27,47,4 l54,35,76,22,4 l45,55,30,77,4 l45,55,65,78,4"],["det","e82,18,11,16,35 l76,22,78,21"]]},{"h":"5 · Expert finishing","t":"Use overlapping contours and directional shading to show speed. Compare your result with the reference and correct the three largest differences.","L":[["sh","c50,17,8 l50,26,45,55,7 l42,35,27,47,4 l54,35,76,22,4 l45,55,30,77,4 l45,55,65,78,4"],["det","e82,18,11,16,35 l76,22,78,21"],["det","l30,77,22,93 l65,78,76,91"]]}]},{"t":"Sunlit Portrait","lv":4,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Compare head tilt, eye-line and feature spacing carefully. Use the Photo button to upload or find a real subject.","L":[["con","e50,43,25,30 p30,49,36,75,50,90,64,75,70,49"]]},{"h":"2 · Construct accurate forms","t":"Locate the light family and shadow family before blending.","L":[["old","e50,43,25,30 p30,49,36,75,50,90,64,75,70,49"],["new","e42,44,4,3 e58,44,4,3 l50,48,47,62"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Locate the light family and shadow family before blending.","L":[["out","e50,43,25,30 p30,49,36,75,50,90,64,75,70,49"],["det","e42,44,4,3 e58,44,4,3 l50,48,47,62"]]},{"h":"4 · Light and material","t":"Preserve a coherent terminator along the cheek and nose.","L":[["sh","e50,43,25,30 p30,49,36,75,50,90,64,75,70,49"],["det","e42,44,4,3 e58,44,4,3 l50,48,47,62"]]},{"h":"5 · Expert finishing","t":"Finish with edge control, reflected light and selective detail. Compare your result with the reference and correct the three largest differences.","L":[["sh","e50,43,25,30 p30,49,36,75,50,90,64,75,70,49"],["det","e42,44,4,3 e58,44,4,3 l50,48,47,62"],["det","q39,73,50,77,61,73"]]}]},{"t":"Full Figure Anatomy","lv":5,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Use eight-head proportions as a starting guide, then measure the model. Use the Photo button to upload or find a real subject.","L":[["con","c50,13,7 e50,34,12,17 e50,55,10,7 l40,31,29,53,5 l60,31,72,54,5 l45,58,40,84,7 l55,58,61,84,7"]]},{"h":"2 · Construct accurate forms","t":"Identify rib cage, pelvis, spine and weight-bearing leg.","L":[["old","c50,13,7 e50,34,12,17 e50,55,10,7 l40,31,29,53,5 l60,31,72,54,5 l45,58,40,84,7 l55,58,61,84,7"],["new","l50,22,50,59 l38,43,62,43"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Identify rib cage, pelvis, spine and weight-bearing leg.","L":[["out","c50,13,7 e50,34,12,17 e50,55,10,7 l40,31,29,53,5 l60,31,72,54,5 l45,58,40,84,7 l55,58,61,84,7"],["det","l50,22,50,59 l38,43,62,43"]]},{"h":"4 · Light and material","t":"Study muscle attachments and foreshortening rather than tracing contours.","L":[["sh","c50,13,7 e50,34,12,17 e50,55,10,7 l40,31,29,53,5 l60,31,72,54,5 l45,58,40,84,7 l55,58,61,84,7"],["det","l50,22,50,59 l38,43,62,43"]]},{"h":"5 · Expert finishing","t":"Render light over form with consistent edge and value logic. Compare your result with the reference and correct the three largest differences.","L":[["sh","c50,13,7 e50,34,12,17 e50,55,10,7 l40,31,29,53,5 l60,31,72,54,5 l45,58,40,84,7 l55,58,61,84,7"],["det","l50,22,50,59 l38,43,62,43"],["det","e50,35,9,14"]]}]},{"t":"Master Portrait Study","lv":5,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Compare distances, angles and negative shapes before any shading. Use the Photo button to upload or find a real subject.","L":[["con","e50,41,25,30 p29,49,35,77,50,91,65,77,71,49"]]},{"h":"2 · Construct accurate forms","t":"Use landmarks to capture individual likeness, not generic symmetry.","L":[["old","e50,41,25,30 p29,49,35,77,50,91,65,77,71,49"],["new","e41,44,4,2 e59,44,4,2 p45,66,50,69,55,66"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Use landmarks to capture individual likeness, not generic symmetry.","L":[["out","e50,41,25,30 p29,49,35,77,50,91,65,77,71,49"],["det","e41,44,4,2 e59,44,4,2 p45,66,50,69,55,66"]]},{"h":"4 · Light and material","t":"Develop a five-value map and control facial plane transitions.","L":[["sh","e50,41,25,30 p29,49,35,77,50,91,65,77,71,49"],["det","e41,44,4,2 e59,44,4,2 p45,66,50,69,55,66"]]},{"h":"5 · Expert finishing","t":"Finish selectively: eyes, mouth corners, hair masses and edges. Compare your result with the reference and correct the three largest differences.","L":[["sh","e50,41,25,30 p29,49,35,77,50,91,65,77,71,49"],["det","e41,44,4,2 e59,44,4,2 p45,66,50,69,55,66"],["det","q39,75,50,79,61,75"]]}]}];
+root.LESSON_SETS.life=[{"t":"Realistic Leaf","lv":1,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Measure the leaf silhouette and its central axis. Use the Photo button to upload or find a real subject.","L":[["con","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"]]},{"h":"2 · Construct accurate forms","t":"Track the branching angle of veins, not identical decorative lines.","L":[["old","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["new","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Track the branching angle of veins, not identical decorative lines.","L":[["out","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["det","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"]]},{"h":"4 · Light and material","t":"Shade the leaf planes according to their tilt toward light.","L":[["sh","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["det","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"]]},{"h":"5 · Expert finishing","t":"Use subtle edge irregularities and a few crisp vein accents. Compare your result with the reference and correct the three largest differences.","L":[["sh","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["det","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"],["det","p32,50,39,43,46,40 p53,64,61,55,67,51"]]}]},{"t":"Botanical Flower Study","lv":2,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Observe petal overlaps, organic asymmetry and stem curvature. Use a photographic reference of real anatomy, materials, and lighting.","L":[["con","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"]]},{"h":"2 · Construct accurate forms","t":"Measure proportions and construct the subject in three dimensions before adding detail.","L":[["old","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["new","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"]]},{"h":"3 · Refine contours and anatomy","t":"Refine believable anatomy, silhouette, perspective, and overlapping forms from reference.","L":[["out","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["det","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"]]},{"h":"4 · Light and material","t":"Build a consistent light source, form shadows, cast shadows, and material textures.","L":[["sh","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["det","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"]]},{"h":"5 · Expert finishing","t":"Finish with subtle edges, controlled contrast, and convincing real-world detail; compare against the reference.","L":[["sh","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["det","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"],["det","p32,50,39,43,46,40 p53,64,61,55,67,51"]]}]},{"t":"Butterfly Wing Anatomy","lv":3,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Study the actual venation and bilateral differences of butterfly wings. Use a photographic reference of real anatomy, materials, and lighting.","L":[["con","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"]]},{"h":"2 · Construct accurate forms","t":"Measure proportions and construct the subject in three dimensions before adding detail.","L":[["old","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["new","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"]]},{"h":"3 · Refine contours and anatomy","t":"Refine believable anatomy, silhouette, perspective, and overlapping forms from reference.","L":[["out","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["det","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"]]},{"h":"4 · Light and material","t":"Build a consistent light source, form shadows, cast shadows, and material textures.","L":[["sh","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["det","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"]]},{"h":"5 · Expert finishing","t":"Finish with subtle edges, controlled contrast, and convincing real-world detail; compare against the reference.","L":[["sh","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["det","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"],["det","p32,50,39,43,46,40 p53,64,61,55,67,51"]]}]},{"t":"Detailed Tree Bark","lv":4,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Observe bark fissures and light across cylindrical trunk forms. Use a photographic reference of real anatomy, materials, and lighting.","L":[["con","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"]]},{"h":"2 · Construct accurate forms","t":"Measure proportions and construct the subject in three dimensions before adding detail.","L":[["old","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["new","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"]]},{"h":"3 · Refine contours and anatomy","t":"Refine believable anatomy, silhouette, perspective, and overlapping forms from reference.","L":[["out","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["det","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"]]},{"h":"4 · Light and material","t":"Build a consistent light source, form shadows, cast shadows, and material textures.","L":[["sh","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["det","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"]]},{"h":"5 · Expert finishing","t":"Finish with subtle edges, controlled contrast, and convincing real-world detail; compare against the reference.","L":[["sh","p50,14,76,48,50,85,24,48,50,14 l50,85,50,94"],["det","l50,20,50,84 l50,43,35,34 l50,55,65,39 l50,66,33,54 l50,73,63,61"],["det","p32,50,39,43,46,40 p53,64,61,55,67,51"]]}]}];
+root.LESSON_SETS.objects=[{"t":"Wooden Chair","lv":1,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Block in the seat as a perspective quadrilateral. Use the Photo button to upload or find a real subject.","L":[["con","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"]]},{"h":"2 · Construct accurate forms","t":"Make vertical legs vertical while seat edges recede.","L":[["old","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"],["new","l27,69,25,94 l62,75,62,96 l70,61,75,86"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Make vertical legs vertical while seat edges recede.","L":[["out","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"],["det","l27,69,25,94 l62,75,62,96 l70,61,75,86"]]},{"h":"4 · Light and material","t":"Use overlapping shapes to show thickness and joinery.","L":[["sh","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"],["det","l27,69,25,94 l62,75,62,96 l70,61,75,86"]]},{"h":"5 · Expert finishing","t":"Shade under the seat and draw wood grain with restraint. Compare your result with the reference and correct the three largest differences.","L":[["sh","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"],["det","l27,69,25,94 l62,75,62,96 l70,61,75,86"],["det","l35,28,61,31 l35,36,61,39"]]}]},{"t":"Reflective Metal Teapot","lv":3,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Observe elliptical metal forms and environmental reflections. Use a photographic reference of real anatomy, materials, and lighting.","L":[["con","c50,52,30"]]},{"h":"2 · Construct accurate forms","t":"Measure proportions and construct the subject in three dimensions before adding detail.","L":[["old","c50,52,30"],["new","e50,52,23,24"]]},{"h":"3 · Refine contours and anatomy","t":"Refine believable anatomy, silhouette, perspective, and overlapping forms from reference.","L":[["out","c50,52,30"],["det","e50,52,23,24"]]},{"h":"4 · Light and material","t":"Build a consistent light source, form shadows, cast shadows, and material textures.","L":[["sh","c50,52,30"],["det","e50,52,23,24"]]},{"h":"5 · Expert finishing","t":"Finish with subtle edges, controlled contrast, and convincing real-world detail; compare against the reference.","L":[["sh","c50,52,30"],["det","e50,52,23,24"],["det","e39,38,10,6 e61,68,16,8"]]}]},{"t":"Leather Football Boots","lv":3,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Study the complex shapes and stitched materials of real football boots. Use a photographic reference of real anatomy, materials, and lighting.","L":[["con","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"]]},{"h":"2 · Construct accurate forms","t":"Measure proportions and construct the subject in three dimensions before adding detail.","L":[["old","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"],["new","l27,69,25,94 l62,75,62,96 l70,61,75,86"]]},{"h":"3 · Refine contours and anatomy","t":"Refine believable anatomy, silhouette, perspective, and overlapping forms from reference.","L":[["out","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"],["det","l27,69,25,94 l62,75,62,96 l70,61,75,86"]]},{"h":"4 · Light and material","t":"Build a consistent light source, form shadows, cast shadows, and material textures.","L":[["sh","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"],["det","l27,69,25,94 l62,75,62,96 l70,61,75,86"]]},{"h":"5 · Expert finishing","t":"Finish with subtle edges, controlled contrast, and convincing real-world detail; compare against the reference.","L":[["sh","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"],["det","l27,69,25,94 l62,75,62,96 l70,61,75,86"],["det","l35,28,61,31 l35,36,61,39"]]}]},{"t":"Vintage Bicycle","lv":4,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Study mechanical perspective, wheel ellipses, and frame geometry. Use a photographic reference of real anatomy, materials, and lighting.","L":[["con","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"]]},{"h":"2 · Construct accurate forms","t":"Measure proportions and construct the subject in three dimensions before adding detail.","L":[["old","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"],["new","l27,69,25,94 l62,75,62,96 l70,61,75,86"]]},{"h":"3 · Refine contours and anatomy","t":"Refine believable anatomy, silhouette, perspective, and overlapping forms from reference.","L":[["out","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"],["det","l27,69,25,94 l62,75,62,96 l70,61,75,86"]]},{"h":"4 · Light and material","t":"Build a consistent light source, form shadows, cast shadows, and material textures.","L":[["sh","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"],["det","l27,69,25,94 l62,75,62,96 l70,61,75,86"]]},{"h":"5 · Expert finishing","t":"Finish with subtle edges, controlled contrast, and convincing real-world detail; compare against the reference.","L":[["sh","p30,17,68,22,69,61,31,56,30,17 p27,56,70,61,62,75,23,69,27,56"],["det","l27,69,25,94 l62,75,62,96 l70,61,75,86"],["det","l35,28,61,31 l35,36,61,39"]]}]},{"t":"Detailed Mechanical Watch","lv":5,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Observe tiny gears, metallic reflections, and layered depth. Use a photographic reference of real anatomy, materials, and lighting.","L":[["con","c50,52,30"]]},{"h":"2 · Construct accurate forms","t":"Measure proportions and construct the subject in three dimensions before adding detail.","L":[["old","c50,52,30"],["new","e50,52,23,24"]]},{"h":"3 · Refine contours and anatomy","t":"Refine believable anatomy, silhouette, perspective, and overlapping forms from reference.","L":[["out","c50,52,30"],["det","e50,52,23,24"]]},{"h":"4 · Light and material","t":"Build a consistent light source, form shadows, cast shadows, and material textures.","L":[["sh","c50,52,30"],["det","e50,52,23,24"]]},{"h":"5 · Expert finishing","t":"Finish with subtle edges, controlled contrast, and convincing real-world detail; compare against the reference.","L":[["sh","c50,52,30"],["det","e50,52,23,24"],["det","e39,38,10,6 e61,68,16,8"]]}]}];
+root.LESSON_SETS.land=[{"t":"Mountain Valley","lv":3,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Mark horizon and compare the angles of major ridges. Use the Photo button to upload or find a real subject.","L":[["con","p4,69,26,28,43,57,62,18,96,68 l4,78,96,78"]]},{"h":"2 · Construct accurate forms","t":"Build near, middle and far layers with overlap.","L":[["old","p4,69,26,28,43,57,62,18,96,68 l4,78,96,78"],["new","p4,84,36,64,62,77,96,58 l46,97,58,79"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Build near, middle and far layers with overlap.","L":[["out","p4,69,26,28,43,57,62,18,96,68 l4,78,96,78"],["det","p4,84,36,64,62,77,96,58 l46,97,58,79"]]},{"h":"4 · Light and material","t":"Lower contrast and soften edges as mountains recede.","L":[["sh","p4,69,26,28,43,57,62,18,96,68 l4,78,96,78"],["det","p4,84,36,64,62,77,96,58 l46,97,58,79"]]},{"h":"5 · Expert finishing","t":"Use a controlled value hierarchy to lead the eye. Compare your result with the reference and correct the three largest differences.","L":[["sh","p4,69,26,28,43,57,62,18,96,68 l4,78,96,78"],["det","p4,84,36,64,62,77,96,58 l46,97,58,79"],["det","l20,50,29,41 l60,42,65,31"]]}]},{"t":"City Street","lv":3,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Set a horizon and two vanishing points outside the page. Use the Photo button to upload or find a real subject.","L":[["con","l50,57,3,93 l50,57,97,93 l50,57,50,98"]]},{"h":"2 · Construct accurate forms","t":"Send building edges toward the correct vanishing point.","L":[["old","l50,57,3,93 l50,57,97,93 l50,57,50,98"],["new","p6,16,34,22,34,76,6,88,6,16 p67,22,95,14,95,87,67,75,67,22"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Send building edges toward the correct vanishing point.","L":[["out","l50,57,3,93 l50,57,97,93 l50,57,50,98"],["det","p6,16,34,22,34,76,6,88,6,16 p67,22,95,14,95,87,67,75,67,22"]]},{"h":"4 · Light and material","t":"Scale windows and figures smaller with distance.","L":[["sh","l50,57,3,93 l50,57,97,93 l50,57,50,98"],["det","p6,16,34,22,34,76,6,88,6,16 p67,22,95,14,95,87,67,75,67,22"]]},{"h":"5 · Expert finishing","t":"Use sharp foreground edges and softer distant architecture. Compare your result with the reference and correct the three largest differences.","L":[["sh","l50,57,3,93 l50,57,97,93 l50,57,50,98"],["det","p6,16,34,22,34,76,6,88,6,16 p67,22,95,14,95,87,67,75,67,22"],["det","l6,39,34,42 l67,42,95,39 l22,92,46,61"]]}]},{"t":"Old Stone Building","lv":4,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Establish a reliable perspective grid and major masses. Use the Photo button to upload or find a real subject.","L":[["con","p19,23,49,12,82,25,82,87,19,87,19,23"]]},{"h":"2 · Construct accurate forms","t":"Design openings with consistent wall thickness.","L":[["old","p19,23,49,12,82,25,82,87,19,87,19,23"],["new","p38,87,38,60,59,60,59,87 p25,37,36,37,36,50,25,50"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Design openings with consistent wall thickness.","L":[["out","p19,23,49,12,82,25,82,87,19,87,19,23"],["det","p38,87,38,60,59,60,59,87 p25,37,36,37,36,50,25,50"]]},{"h":"4 · Light and material","t":"Break stone texture into large value groups first.","L":[["sh","p19,23,49,12,82,25,82,87,19,87,19,23"],["det","p38,87,38,60,59,60,59,87 p25,37,36,37,36,50,25,50"]]},{"h":"5 · Expert finishing","t":"Use selective masonry detail to create a focal point. Compare your result with the reference and correct the three largest differences.","L":[["sh","p19,23,49,12,82,25,82,87,19,87,19,23"],["det","p38,87,38,60,59,60,59,87 p25,37,36,37,36,50,25,50"],["det","l19,42,82,42 l19,58,82,58 l19,74,82,74"]]}]},{"t":"Ocean Wave","lv":4,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Find the wave silhouette and its rolling volume. Use the Photo button to upload or find a real subject.","L":[["con","p5,69,26,58,42,48,62,39,78,41,95,60,95,88,5,88,5,69"]]},{"h":"2 · Construct accurate forms","t":"Break foam into irregular grouped shapes, not identical curls.","L":[["old","p5,69,26,58,42,48,62,39,78,41,95,60,95,88,5,88,5,69"],["new","q22,61,36,68,54,59 q53,48,68,50,85,62"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Break foam into irregular grouped shapes, not identical curls.","L":[["out","p5,69,26,58,42,48,62,39,78,41,95,60,95,88,5,88,5,69"],["det","q22,61,36,68,54,59 q53,48,68,50,85,62"]]},{"h":"4 · Light and material","t":"Use transparent midtones beneath bright foam.","L":[["sh","p5,69,26,58,42,48,62,39,78,41,95,60,95,88,5,88,5,69"],["det","q22,61,36,68,54,59 q53,48,68,50,85,62"]]},{"h":"5 · Expert finishing","t":"Balance crisp spray accents with smooth water gradients. Compare your result with the reference and correct the three largest differences.","L":[["sh","p5,69,26,58,42,48,62,39,78,41,95,60,95,88,5,88,5,69"],["det","q22,61,36,68,54,59 q53,48,68,50,85,62"],["det","q12,76,30,73,48,79 q45,85,65,80,90,83"]]}]},{"t":"Complex Interior","lv":5,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Set a consistent eye-level and measure the room proportions. Use the Photo button to upload or find a real subject.","L":[["con","p8,17,92,17,92,90,8,90,8,17 l8,17,50,53 l92,17,50,53 l8,90,50,53 l92,90,50,53"]]},{"h":"2 · Construct accurate forms","t":"Construct furniture from boxes sharing the same perspective system.","L":[["old","p8,17,92,17,92,90,8,90,8,17 l8,17,50,53 l92,17,50,53 l8,90,50,53 l92,90,50,53"],["new","p26,34,40,39,40,74,26,81,26,34 p62,36,79,32,79,77,62,73,62,36"]]},{"h":"3 · Refine contours and anatomy","t":"Compare your drawing with the photo: correct angles, negative spaces and overlaps. Construct furniture from boxes sharing the same perspective system.","L":[["out","p8,17,92,17,92,90,8,90,8,17 l8,17,50,53 l92,17,50,53 l8,90,50,53 l92,90,50,53"],["det","p26,34,40,39,40,74,26,81,26,34 p62,36,79,32,79,77,62,73,62,36"]]},{"h":"4 · Light and material","t":"Track occlusion, scale and contact shadows throughout the space.","L":[["sh","p8,17,92,17,92,90,8,90,8,17 l8,17,50,53 l92,17,50,53 l8,90,50,53 l92,90,50,53"],["det","p26,34,40,39,40,74,26,81,26,34 p62,36,79,32,79,77,62,73,62,36"]]},{"h":"5 · Expert finishing","t":"Control depth with atmospheric contrast and selective details. Compare your result with the reference and correct the three largest differences.","L":[["sh","p8,17,92,17,92,90,8,90,8,17 l8,17,50,53 l92,17,50,53 l8,90,50,53 l92,90,50,53"],["det","p26,34,40,39,40,74,26,81,26,34 p62,36,79,32,79,77,62,73,62,36"],["det","l50,53,50,90 l8,62,92,62"]]}]}];
+root.LESSON_SETS.fantasy=[{"t":"Realistic Dragon Anatomy","lv":2,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Combine lizard, bat, and bird anatomy to design a physically believable dragon. Use a photographic reference of real anatomy, materials, and lighting.","L":[["con","p36,17,62,22,70,52,62,80,47,90,34,72,31,41,36,17"]]},{"h":"2 · Construct accurate forms","t":"Measure proportions and construct the subject in three dimensions before adding detail.","L":[["old","p36,17,62,22,70,52,62,80,47,90,34,72,31,41,36,17"],["new","p35,20,24,6,27,42 p60,21,72,7,67,43 c42,43,3"]]},{"h":"3 · Refine contours and anatomy","t":"Refine believable anatomy, silhouette, perspective, and overlapping forms from reference.","L":[["out","p36,17,62,22,70,52,62,80,47,90,34,72,31,41,36,17"],["det","p35,20,24,6,27,42 p60,21,72,7,67,43 c42,43,3"]]},{"h":"4 · Light and material","t":"Build a consistent light source, form shadows, cast shadows, and material textures.","L":[["sh","p36,17,62,22,70,52,62,80,47,90,34,72,31,41,36,17"],["det","p35,20,24,6,27,42 p60,21,72,7,67,43 c42,43,3"]]},{"h":"5 · Expert finishing","t":"Finish with subtle edges, controlled contrast, and convincing real-world detail; compare against the reference.","L":[["sh","p36,17,62,22,70,52,62,80,47,90,34,72,31,41,36,17"],["det","p35,20,24,6,27,42 p60,21,72,7,67,43 c42,43,3"],["det","e53,76,13,8 l37,55,46,61"]]}]},{"t":"Armored Fantasy Knight","lv":3,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Construct a realistic human figure wearing functional layered armor. Use a photographic reference of real anatomy, materials, and lighting.","L":[["con","c50,13,7 e50,34,12,17 e50,55,10,7 l40,31,29,53,5 l60,31,72,54,5 l45,58,40,84,7 l55,58,61,84,7"]]},{"h":"2 · Construct accurate forms","t":"Measure proportions and construct the subject in three dimensions before adding detail.","L":[["old","c50,13,7 e50,34,12,17 e50,55,10,7 l40,31,29,53,5 l60,31,72,54,5 l45,58,40,84,7 l55,58,61,84,7"],["new","l50,22,50,59 l38,43,62,43"]]},{"h":"3 · Refine contours and anatomy","t":"Refine believable anatomy, silhouette, perspective, and overlapping forms from reference.","L":[["out","c50,13,7 e50,34,12,17 e50,55,10,7 l40,31,29,53,5 l60,31,72,54,5 l45,58,40,84,7 l55,58,61,84,7"],["det","l50,22,50,59 l38,43,62,43"]]},{"h":"4 · Light and material","t":"Build a consistent light source, form shadows, cast shadows, and material textures.","L":[["sh","c50,13,7 e50,34,12,17 e50,55,10,7 l40,31,29,53,5 l60,31,72,54,5 l45,58,40,84,7 l55,58,61,84,7"],["det","l50,22,50,59 l38,43,62,43"]]},{"h":"5 · Expert finishing","t":"Finish with subtle edges, controlled contrast, and convincing real-world detail; compare against the reference.","L":[["sh","c50,13,7 e50,34,12,17 e50,55,10,7 l40,31,29,53,5 l60,31,72,54,5 l45,58,40,84,7 l55,58,61,84,7"],["det","l50,22,50,59 l38,43,62,43"],["det","e50,35,9,14"]]}]},{"t":"Fantasy Castle in Perspective","lv":4,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Design an imaginary castle using real architectural structure and stone texture. Use a photographic reference of real anatomy, materials, and lighting.","L":[["con","p19,23,49,12,82,25,82,87,19,87,19,23"]]},{"h":"2 · Construct accurate forms","t":"Measure proportions and construct the subject in three dimensions before adding detail.","L":[["old","p19,23,49,12,82,25,82,87,19,87,19,23"],["new","p38,87,38,60,59,60,59,87 p25,37,36,37,36,50,25,50"]]},{"h":"3 · Refine contours and anatomy","t":"Refine believable anatomy, silhouette, perspective, and overlapping forms from reference.","L":[["out","p19,23,49,12,82,25,82,87,19,87,19,23"],["det","p38,87,38,60,59,60,59,87 p25,37,36,37,36,50,25,50"]]},{"h":"4 · Light and material","t":"Build a consistent light source, form shadows, cast shadows, and material textures.","L":[["sh","p19,23,49,12,82,25,82,87,19,87,19,23"],["det","p38,87,38,60,59,60,59,87 p25,37,36,37,36,50,25,50"]]},{"h":"5 · Expert finishing","t":"Finish with subtle edges, controlled contrast, and convincing real-world detail; compare against the reference.","L":[["sh","p19,23,49,12,82,25,82,87,19,87,19,23"],["det","p38,87,38,60,59,60,59,87 p25,37,36,37,36,50,25,50"],["det","l19,42,82,42 l19,58,82,58 l19,74,82,74"]]}]},{"t":"Cinematic Creature Portrait","lv":5,"k":"#6a8695","custom":[{"h":"1 · Observe and measure","t":"Design a fantastical creature with plausible skeletal anatomy, fur, scales and cinematic lighting. Use a photographic reference of real anatomy, materials, and lighting.","L":[["con","e49,48,25,26 e49,71,14,11 p27,34,20,15,43,27 p55,27,79,15,72,34"]]},{"h":"2 · Construct accurate forms","t":"Measure proportions and construct the subject in three dimensions before adding detail.","L":[["old","e49,48,25,26 e49,71,14,11 p27,34,20,15,43,27 p55,27,79,15,72,34"],["new","e40,48,4,3 e58,48,4,3 p43,69,50,75,57,69"]]},{"h":"3 · Refine contours and anatomy","t":"Refine believable anatomy, silhouette, perspective, and overlapping forms from reference.","L":[["out","e49,48,25,26 e49,71,14,11 p27,34,20,15,43,27 p55,27,79,15,72,34"],["det","e40,48,4,3 e58,48,4,3 p43,69,50,75,57,69"]]},{"h":"4 · Light and material","t":"Build a consistent light source, form shadows, cast shadows, and material textures.","L":[["sh","e49,48,25,26 e49,71,14,11 p27,34,20,15,43,27 p55,27,79,15,72,34"],["det","e40,48,4,3 e58,48,4,3 p43,69,50,75,57,69"]]},{"h":"5 · Expert finishing","t":"Finish with subtle edges, controlled contrast, and convincing real-world detail; compare against the reference.","L":[["sh","e49,48,25,26 e49,71,14,11 p27,34,20,15,43,27 p55,27,79,15,72,34"],["det","e40,48,4,3 e58,48,4,3 p43,69,50,75,57,69"],["det","l25,60,12,55 l73,60,87,55"]]}]}];
+})(typeof window!=="undefined"?window:globalThis);
+
+/* brush */
+/* Paint: the drawing surface and the art tools */
+window.Paint = (function () {
+  'use strict';
+  var W = 1600, H = 1200;
+  var ink, ictx, live, lctx, pre, pctx;
+  var toolId = 'pencil', sizeIdx = 1, color = '#2f2b28';
+  var undoStack = [], redoStack = [], bytes = 0;
+  var active = null, activeType = '', penAt = 0, st = null, onChange = function () { };
+  var masks = {}, tintCache = {};
+
+  var TOOLS = {
+    pencil: { name: 'Pencil', mode: 'stamp', mask: 'pencil', sizes: [3, 5, 8, 12, 18], alpha: 0.5, spacing: 0.2, pressSize: 0.3, pressAlpha: 0.6, rot: 1 },
+    shader: { name: 'Shading pencil', mode: 'stamp', mask: 'shader', sizes: [24, 40, 60, 86, 120], alpha: 0.085, spacing: 0.13, pressAlpha: 0.7, rot: 1 },
+    charcoal: { name: 'Charcoal', mode: 'stamp', mask: 'charcoal', sizes: [10, 18, 30, 46, 70], alpha: 0.3, spacing: 0.11, pressAlpha: 0.5, rot: 1, jitter: 0.08 },
+    pen: { name: 'Ink pen', mode: 'line', sizes: [2.5, 4, 6.5, 10, 16], alpha: 1, pressSize: 0.35 },
+    marker: { name: 'Marker', mode: 'layer', sizes: [10, 18, 28, 42, 60], alpha: 0.62 },
+    crayon: { name: 'Crayon', mode: 'stamp', mask: 'crayon', sizes: [8, 14, 22, 32, 46], alpha: 0.45, spacing: 0.13, rot: 1, jitter: 0.05 },
+    paint: { name: 'Paint brush', mode: 'softlayer', mask: 'soft', sizes: [16, 28, 44, 64, 90], alpha: 0.4, spacing: 0.08 },
+    chalk: { name: 'Chalk', mode: 'stamp', mask: 'chalk', sizes: [10, 18, 30, 46, 70], alpha: 0.5, spacing: 0.12, rot: 1, jitter: 0.06 },
+    smudge: { name: 'Smudge', mode: 'smudge', sizes: [22, 36, 54, 76, 104], spacing: 0.07 },
+    eraser: { name: 'Eraser', mode: 'erase', sizes: [10, 20, 36, 56, 90] }
+  };
+  var ORDER = ['pencil', 'shader', 'charcoal', 'pen', 'marker', 'crayon', 'paint', 'chalk', 'smudge', 'eraser'];
+
+  /* ---- brush textures ---- */
+  function rng(seed) { var s = seed >>> 0; return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+  function mask(kind) {
+    if (masks[kind]) return masks[kind];
+    var n = 64, c = document.createElement('canvas'); c.width = c.height = n;
+    var x = c.getContext('2d'), img = x.createImageData(n, n), r = rng({ pencil: 11, shader: 23, charcoal: 37, crayon: 51, chalk: 67, soft: 5 }[kind] || 1);
+    for (var j = 0; j < n; j++) for (var i = 0; i < n; i++) {
+      var dx = (i + 0.5) / n * 2 - 1, dy = (j + 0.5) / n * 2 - 1, d = Math.sqrt(dx * dx + dy * dy), a = 0, g = r();
+      if (d < 1) {
+        if (kind === 'pencil') a = (1 - d * d) * (0.55 + 0.45 * g);
+        else if (kind === 'shader') a = Math.pow(1 - d, 1.4) * (0.4 + 0.6 * g);
+        else if (kind === 'charcoal') a = (d < 0.93 ? 1 : 0) * (g > 0.36 ? 0.5 + 0.5 * g : 0.07);
+        else if (kind === 'crayon') a = (1 - Math.pow(d, 6)) * (g > 0.3 ? 0.75 + 0.25 * g : 0.14);
+        else if (kind === 'chalk') a = (1 - Math.pow(d, 3)) * (g > 0.52 ? 0.9 : 0.1);
+        else a = Math.pow(1 - d, 1.15);
+      }
+      img.data[(j * n + i) * 4 + 3] = Math.round(a * 255);
+    }
+    x.putImageData(img, 0, 0);
+    return (masks[kind] = c);
+  }
+  function tinted(kind, col) {
+    var key = kind + col;
+    if (tintCache[key]) return tintCache[key];
+    var m = mask(kind), c = document.createElement('canvas'); c.width = c.height = m.width;
+    var x = c.getContext('2d'); x.drawImage(m, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = col; x.fillRect(0, 0, c.width, c.height);
+    var keys = Object.keys(tintCache); if (keys.length > 40) delete tintCache[keys[0]];
+    return (tintCache[key] = c);
+  }
+
+  /* ---- stroke pieces (ctx-agnostic so the tool previews use the same code) ---- */
+  function dab(ctx, s, x, y, p) {
+    var t = s.def, size = s.size * (1 - (t.pressSize || 0) + (t.pressSize || 0) * p * 1.6);
+    var a = Math.min(1, (t.alpha || 1) * (1 - (t.pressAlpha || 0) + (t.pressAlpha || 0) * p * 1.5));
+    if (t.mode === 'softlayer') a = 0.5;
+    if (t.jitter) { x += (Math.random() - 0.5) * size * t.jitter * 2; y += (Math.random() - 0.5) * size * t.jitter * 2; }
+    ctx.globalAlpha = a;
+    if (t.rot) { ctx.save(); ctx.translate(x, y); ctx.rotate(Math.random() * 6.283); ctx.drawImage(s.stamp, -size / 2, -size / 2, size, size); ctx.restore(); }
+    else ctx.drawImage(s.stamp, x - size / 2, y - size / 2, size, size);
+    ctx.globalAlpha = 1;
+  }
+  function walk(s, a, b, fn) {
+    var dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy), sp = Math.max(1, s.size * s.def.spacing), t = s.acc;
+    while (t <= d) { var u = d ? t / d : 0; fn(a.x + dx * u, a.y + dy * u, a.p + (b.p - a.p) * u); t += sp; }
+    s.acc = t - d;
+  }
+  function lineSeg(ctx, s, a, b, col) {
+    var m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, t = s.def;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = col;
+    ctx.lineWidth = s.size * (1 - (t.pressSize || 0) + (t.pressSize || 0) * b.p * 1.6);
+    ctx.beginPath(); ctx.moveTo(s.mid.x, s.mid.y); ctx.quadraticCurveTo(a.x, a.y, m.x, m.y); ctx.stroke();
+    s.mid = m;
+  }
+  function dot(ctx, s, p, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p.x, p.y, s.size / 2, 0, 6.2832); ctx.fill(); }
+
+  /* ---- smudge ---- */
+  function smudgeStart(s, p) {
+    var d = Math.ceil(s.size); s.buf = document.createElement('canvas'); s.buf.width = s.buf.height = d; s.bctx = s.buf.getContext('2d');
+    try { s.bctx.drawImage(ink, p.x - d / 2, p.y - d / 2, d, d, 0, 0, d, d); } catch (e) { } softMask(s);
+  }
+  function softMask(s) { var b = s.bctx, d = s.buf.width; b.globalCompositeOperation = 'destination-in'; b.globalAlpha = 1; b.drawImage(mask('soft'), 0, 0, d, d); b.globalCompositeOperation = 'source-over'; }
+  function smudgeStep(s, x, y) {
+    var d = s.buf.width, h = d / 2;
+    ictx.globalCompositeOperation = 'destination-out'; ictx.globalAlpha = 0.12; ictx.drawImage(mask('soft'), x - h, y - h, d, d);
+    ictx.globalCompositeOperation = 'source-over'; ictx.globalAlpha = 0.3; ictx.drawImage(s.buf, x - h, y - h);
+    ictx.globalAlpha = 1;
+    try { s.bctx.globalAlpha = 0.16; s.bctx.drawImage(ink, x - h, y - h, d, d, 0, 0, d, d); } catch (e) { } s.bctx.globalAlpha = 1; softMask(s);
+  }
+
+  /* ---- live stroke ---- */
+  function grow(s, p) { var r = s.size * 0.8 + 4; s.bb[0] = Math.min(s.bb[0], p.x - r); s.bb[1] = Math.min(s.bb[1], p.y - r); s.bb[2] = Math.max(s.bb[2], p.x + r); s.bb[3] = Math.max(s.bb[3], p.y + r); }
+  function begin(p) {
+    var def = TOOLS[toolId];
+    pctx.globalCompositeOperation = 'copy'; pctx.drawImage(ink, 0, 0); pctx.globalCompositeOperation = 'source-over';
+    st = { def: def, size: def.sizes[sizeIdx], last: p, mid: p, acc: 0, bb: [1e9, 1e9, -1e9, -1e9] };
+    if (def.mask) st.stamp = tinted(def.mask, color);
+    grow(st, p);
+    if (def.mode === 'stamp') dab(ictx, st, p.x, p.y, p.p), st.acc = Math.max(1, st.size * def.spacing);
+    else if (def.mode === 'line') dot(ictx, { size: st.size * (1 - def.pressSize + def.pressSize * p.p * 1.6) }, p, color);
+    else if (def.mode === 'erase') { ictx.globalCompositeOperation = 'destination-out'; dot(ictx, st, p, '#000'); ictx.globalCompositeOperation = 'source-over'; }
+    else if (def.mode === 'layer') { live.style.opacity = def.alpha; dot(lctx, st, p, color); }
+    else if (def.mode === 'softlayer') { live.style.opacity = def.alpha; dab(lctx, st, p.x, p.y, p.p); st.acc = Math.max(1, st.size * def.spacing); }
+    else if (def.mode === 'smudge') smudgeStart(st, p);
+  }
+  function extend(raw) {
+    if (!st) return;
+    var a = st.last, p = { x: a.x + (raw.x - a.x) * 0.75, y: a.y + (raw.y - a.y) * 0.75, p: a.p + (raw.p - a.p) * 0.5 }, m = st.def.mode;
+    if (Math.abs(p.x - a.x) + Math.abs(p.y - a.y) < 0.6) return;
+    if (m === 'stamp') walk(st, a, p, function (x, y, pr) { dab(ictx, st, x, y, pr); });
+    else if (m === 'softlayer') walk(st, a, p, function (x, y, pr) { dab(lctx, st, x, y, pr); });
+    else if (m === 'line') lineSeg(ictx, st, a, p, color);
+    else if (m === 'layer') lineSeg(lctx, st, a, p, color);
+    else if (m === 'erase') { ictx.globalCompositeOperation = 'destination-out'; lineSeg(ictx, st, a, p, '#000'); ictx.globalCompositeOperation = 'source-over'; }
+    else if (m === 'smudge') walk(st, a, p, function (x, y) { smudgeStep(st, x, y); });
+    st.last = p; grow(st, p);
+  }
+  function finish() {
+    if (!st) return;
+    var m = st.def.mode;
+    if (m === 'line') lineSeg(ictx, st, st.last, st.last, color);
+    if (m === 'erase') { ictx.globalCompositeOperation = 'destination-out'; lineSeg(ictx, st, st.last, st.last, '#000'); ictx.globalCompositeOperation = 'source-over'; }
+    if (m === 'layer' || m === 'softlayer') {
+      if (m === 'layer') lineSeg(lctx, st, st.last, st.last, color);
+      ictx.globalAlpha = st.def.alpha; ictx.drawImage(live, 0, 0); ictx.globalAlpha = 1;
+      lctx.clearRect(0, 0, W, H); live.style.opacity = '';
+    }
+    record(st.bb); st = null; onChange();
+  }
+  function record(bb) {
+    var x0 = Math.max(0, Math.floor(bb[0])), y0 = Math.max(0, Math.floor(bb[1])), x1 = Math.min(W, Math.ceil(bb[2])), y1 = Math.min(H, Math.ceil(bb[3]));
+    if (x1 <= x0 || y1 <= y0) return;
+    var w = x1 - x0, h = y1 - y0, e;
+    try { e = { x: x0, y: y0, before: pctx.getImageData(x0, y0, w, h), after: ictx.getImageData(x0, y0, w, h), n: w * h * 8 }; } catch (err) { return; }
+    undoStack.push(e); bytes += e.n; dropRedo();
+    while (undoStack.length > 40 || (bytes > 160e6 && undoStack.length > 1)) bytes -= undoStack.shift().n;
+  }
+  function dropRedo() { redoStack.forEach(function (e) { bytes -= e.n; }); redoStack = []; }
+
+  /* ---- pointer input (Apple Pencil, finger or mouse) ---- */
+  function pos(e) {
+    var r = ink.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height, p: e.pointerType === 'pen' ? Math.max(0.08, e.pressure || 0.5) : 0.55 };
+  }
+  function abort() { // throw away the stroke in progress (a resting hand that touched before the Pencil did)
+    if (!st) return;
+    ictx.globalAlpha = 1; ictx.globalCompositeOperation = 'copy'; ictx.drawImage(pre, 0, 0); ictx.globalCompositeOperation = 'source-over';
+    lctx.clearRect(0, 0, W, H); live.style.opacity = ''; st = null;
+  }
+  function down(e) {
+    if (e.pointerType === 'pen') penAt = Date.now();
+    if (e.button > 0) return;
+    if (active !== null) { if (e.pointerType === 'pen' && activeType === 'touch') { abort(); active = null; } else return; }
+    if (e.pointerType === 'touch' && Date.now() - penAt < 8000) return; // a resting hand while the Pencil is in use
+    active = e.pointerId; activeType = e.pointerType; try { ink.setPointerCapture(active); } catch (err) { }
+    e.preventDefault(); begin(pos(e));
+  }
+  function move(e) {
+    if (e.pointerType === 'pen') penAt = Date.now();
+    if (e.pointerId !== active) return;
+    e.preventDefault();
+    var evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
+    if (evs && evs.length) evs.forEach(function (v) { extend(pos(v)); }); else extend(pos(e));
+  }
+  function up(e) { if (e.pointerId !== active) return; active = null; finish(); }
+
+  function init(inkCanvas, liveCanvas, cb) {
+    ink = inkCanvas; live = liveCanvas; ictx = ink.getContext('2d'); lctx = live.getContext('2d');
+    pre = document.createElement('canvas'); pre.width = W; pre.height = H; pctx = pre.getContext('2d');
+    onChange = cb || onChange;
+    ink.addEventListener('pointerdown', down); ink.addEventListener('pointermove', move);
+    ink.addEventListener('pointerup', up); ink.addEventListener('pointercancel', up);
+    ink.addEventListener('touchstart', function (e) { e.preventDefault(); }, { passive: false });
+    ink.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  }
+  function swap(from, to, key) {
+    var e = from.pop(); if (!e) return;
+    ictx.putImageData(e[key], e.x, e.y); to.push(e); onChange();
+  }
+  function wipe(keepHistory) {
+    if (keepHistory) { pctx.globalCompositeOperation = 'copy'; pctx.drawImage(ink, 0, 0); pctx.globalCompositeOperation = 'source-over'; }
+    ictx.clearRect(0, 0, W, H);
+    if (keepHistory) record([0, 0, W, H]); else { undoStack = []; redoStack = []; bytes = 0; }
+    onChange();
+  }
+  function flat(w, h) {
+    var c = document.createElement('canvas'); c.width = w; c.height = h; var x = c.getContext('2d');
+    x.fillStyle = '#ffffff'; x.fillRect(0, 0, w, h); x.drawImage(ink, 0, 0, w, h); return c;
+  }
+  function load(img) { wipe(false); ictx.drawImage(img, 0, 0, W, H); onChange(); }
+
+  /* small picture of what a tool looks like, drawn with the real brush code */
+  function preview(id, c, col) {
+    var x = c.getContext('2d'), w = c.width, h = c.height, def = TOOLS[id], s, i, pts = [];
+    x.clearRect(0, 0, w, h);
+    for (i = 0; i <= 24; i++) pts.push({ x: w * 0.1 + w * 0.8 * i / 24, y: h / 2 + Math.sin(i / 24 * 6.283) * h * 0.22, p: 0.35 + 0.5 * Math.sin(i / 24 * 3.14) });
+    var size = { pencil: 3.2, shader: 22, charcoal: 11, pen: 3.6, marker: 9, crayon: 8, paint: 14, chalk: 10, smudge: 14, eraser: 9 }[id] * (h / 68);
+    s = { def: def, size: size, acc: 0, mid: pts[0] };
+    if (def.mask) s.stamp = tinted(def.mask, col || '#2f2b28');
+    if (id === 'eraser' || id === 'smudge') {
+      x.globalAlpha = id === 'eraser' ? 0.8 : 1;
+      var g = x.createLinearGradient(0, 0, w, 0); g.addColorStop(0, '#3a3531'); g.addColorStop(id === 'smudge' ? 0.3 : 1, '#3a3531'); if (id === 'smudge') g.addColorStop(0.95, 'rgba(58,53,49,0)');
+      x.fillStyle = g; x.fillRect(w * 0.08, h * 0.22, w * 0.84, h * 0.56); x.globalAlpha = 1;
+      if (id === 'eraser') { x.globalCompositeOperation = 'destination-out'; for (i = 1; i < pts.length; i++) lineSeg(x, s, pts[i - 1], pts[i], '#000'); x.globalCompositeOperation = 'source-over'; }
+      return;
+    }
+    if (def.mode === 'stamp' || def.mode === 'softlayer') {
+      var t = document.createElement('canvas'); t.width = w; t.height = h; var tx = def.mode === 'softlayer' ? t.getContext('2d') : x;
+      for (i = 1; i < pts.length; i++) walk(s, pts[i - 1], pts[i], function (px, py, pr) { dab(tx, s, px, py, pr); });
+      if (def.mode === 'softlayer') { x.globalAlpha = def.alpha + 0.2; x.drawImage(t, 0, 0); x.globalAlpha = 1; }
+    } else {
+      x.globalAlpha = def.mode === 'layer' ? def.alpha : 1;
+      x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = col || '#2f2b28'; x.lineWidth = size; x.beginPath();
+      pts.forEach(function (p, k) { if (k) x.lineTo(p.x, p.y); else x.moveTo(p.x, p.y); }); x.stroke(); x.globalAlpha = 1;
+    }
+  }
+
+  return {
+    W: W, H: H, TOOLS: TOOLS, ORDER: ORDER, init: init, preview: preview,
+    setTool: function (id) { if (TOOLS[id]) toolId = id; }, tool: function () { return toolId; },
+    setSize: function (i) { sizeIdx = i; }, size: function () { return sizeIdx; },
+    setColor: function (c) { color = c; }, color: function () { return color; },
+    undo: function () { swap(undoStack, redoStack, 'before'); }, redo: function () { swap(redoStack, undoStack, 'after'); },
+    canUndo: function () { return undoStack.length > 0; }, canRedo: function () { return redoStack.length > 0; },
+    clear: function () { wipe(true); }, reset: function () { wipe(false); }, load: load, flat: flat
+  };
+})();
+
+/* app */
+/* Ollie's Art Studio: screens, lessons, saving */
+(function () {
+  'use strict';
+  var ARTIST = 'Ollie';
+  var $ = function (id) { return document.getElementById(id); };
+  var el = function (tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+
+  var CATS = [
+    { id: 'basics', name: 'Art Basics', sub: 'Realistic light, form, value and observation', hero: 0, first: 1 },
+    { id: 'animals', name: 'Animals', sub: 'Lifelike pets, horses, fur and wildlife', hero: 0 },
+    { id: 'people', name: 'People', sub: 'Portrait likeness, anatomy and movement', hero: 0 },
+    { id: 'life', name: 'Living Things', sub: 'Botanical detail and natural textures', hero: 0 },
+    { id: 'objects', name: 'Objects', sub: 'Real materials, machinery and perspective', hero: 0 },
+    { id: 'land', name: 'Landscapes', sub: 'Atmosphere, architecture and depth', hero: 0 },
+    { id: 'fantasy', name: 'Fantasy', sub: 'Believable creatures, armor and worlds', hero: 0 }
+  ];
+  var SETS = window.LESSON_SETS;
+  var COLORS = ['#2f2b28', '#5a5550', '#8c8782', '#bdb9b4', '#ffffff', '#e23b2e', '#f28c28', '#f7d54a', '#8bc34a', '#2f9e58',
+    '#1fa3a3', '#4aa8e8', '#2a5fd0', '#8e55d6', '#f06fa8', '#8b5a2b', '#d9a57c', '#f1c9a5', '#a8704a', '#7a4a21'];
+
+  /* ---------- storage: Claude's saved data when available, this iPad otherwise ---------- */
+  var Store = (function () {
+    var db = null, ready;
+    function lget(k) { try { var v = localStorage.getItem('ollie:' + k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+    function lset(k, v) { try { localStorage.setItem('ollie:' + k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+    function ldel(k) { try { localStorage.removeItem('ollie:' + k); } catch (e) { } }
+    function timed(p, ms) { return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej(new Error('timeout')); }, ms); })]); }
+    ready = (window.claude && window.claude.use ? window.claude.use('db') : Promise.resolve(null)).then(function (d) { db = d || null; return db; }, function () { return null; });
+    return {
+      ready: ready, cloud: function () { return !!db; }, local: lget,
+      get: function (path) {
+        return ready.then(function () {
+          if (!db) return lget(path);
+          return timed(db.doc(path).get(), 9000).then(function (s) { return s.exists ? s.data() : lget(path); }, function () { return lget(path); });
+        });
+      },
+      set: function (path, obj, big) {
+        if (!big || !db) { if (!lset(path, obj) && !db) return Promise.reject(new Error('full')); }
+        return ready.then(function () { if (!db) return true; return timed(db.doc(path).set(obj), 15000); });
+      },
+      del: function (path) { ldel(path); return ready.then(function () { if (db) return timed(db.doc(path).delete(), 9000); }); }
+    };
+  })();
+
+  var progress = Store.local('app/progress') || { done: {} };
+  var index = Store.local('app/sketchindex') || { items: [] };
+  function saveProgress() { Store.set('app/progress', progress).catch(function () { }); }
+  Store.ready.then(function (db) {
+    if (!db) return;
+    Store.get('app/progress').then(function (r) {
+      var changed = false; r = r || { done: {} };
+      Object.keys(r.done || {}).forEach(function (k) { if (!progress.done[k]) { progress.done[k] = r.done[k]; changed = true; } });
+      if (Object.keys(progress.done).length !== Object.keys(r.done || {}).length) saveProgress();
+      if (changed) renderHome();
+    });
+    Store.get('app/sketchindex').then(function (r) { if (r && r.items) { index = r; renderHome(); if (view === 'book') renderBook(); } });
+  });
+
+  /* ---------- small UI helpers ---------- */
+  var view = 'home';
+  function show(v) { view = v; ['home', 'list', 'book', 'studio'].forEach(function (n) { $('v-' + n).classList.toggle('on', n === v); }); if (v === 'studio') fitPaper(); stopSpeak(); }
+  function toast(msg) { var t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(function () { t.classList.remove('on'); }, 2600); }
+  function ask(o) {
+    return new Promise(function (res) {
+      var d = $('dlg'); d.innerHTML = '<h3>' + esc(o.title) + '</h3>' + (o.text ? '<p>' + esc(o.text) + '</p>' : '') +
+        (o.input != null ? '<input id="dlg-in" type="text" maxlength="40" autocomplete="off" value="' + esc(o.input) + '">' : '') + '<div class="btns"></div>';
+      o.buttons.forEach(function (b) {
+        var bt = el('button', b.kind || '', esc(b.label));
+        bt.onclick = function () { var val = $('dlg-in') ? $('dlg-in').value.trim() : ''; $('veil').classList.remove('on'); res({ v: b.v, text: val }); };
+        d.querySelector('.btns').appendChild(bt);
+      });
+      $('veil').classList.add('on');
+    });
+  }
+  function party() {
+    var p = $('party'), cols = ['#ffcf33', '#ff8fa3', '#2fa66a', '#4aa8e8', '#8e55d6', '#f28c28'];
+    for (var i = 0; i < 46; i++) { var c = el('i'); c.style.left = Math.random() * 100 + '%'; c.style.background = cols[i % 6]; c.style.animationDelay = Math.random() * 0.5 + 's'; p.appendChild(c); }
+    setTimeout(function () { p.innerHTML = ''; }, 2400);
+  }
+  var canSpeak = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
+  function speak(t) { try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.rate = 0.88; speechSynthesis.speak(u); } catch (e) { } }
+  function stopSpeak() { try { if (canSpeak) speechSynthesis.cancel(); } catch (e) { } }
+  function keyOf(cat, l) { return cat + ':' + l.t; }
+  function doneIn(cat) { return SETS[cat].filter(function (l) { return progress.done[keyOf(cat, l)]; }).length; }
+
+  /* ---------- home ---------- */
+  function renderHome() {
+    var box = $('cats'), total = 0, all = 0; box.innerHTML = '';
+    CATS.forEach(function (c) {
+      var n = SETS[c.id].length, d = doneIn(c.id); total += d; all += n;
+      var b = el('button', 'cat' + (c.first ? ' first' : ''));
+      b.innerHTML = '<div class="pic">' + Guide.thumb(SETS[c.id][c.hero]) + '</div><div class="txt">' + (c.first ? '<span class="tag">Start here</span>' : '') +
+        '<h3>' + c.name + '</h3><p>' + c.sub + '</p><div class="meter"><i style="width:' + (d / n * 100) + '%"></i></div><div class="count">' + d + ' of ' + n + ' done</div></div>';
+      b.onclick = function () { openList(c); };
+      box.appendChild(b);
+    });
+    $('totaldone').textContent = total + ' of ' + all + ' lessons finished';
+    var k = index.items.length;
+    $('bookcount').textContent = k ? k + (k === 1 ? ' drawing saved.' : ' drawings saved.') : 'Your saved drawings live here.';
+  }
+  function openList(c) {
+    $('listtitle').textContent = c.name;
+    $('listnote').textContent = 'Lifelike drawing from foundation to expert. Study the reference photo, measure carefully, and follow five progressive stages.';
+    var box = $('lessons'), last = 0, names = { 1: ['Foundation', 'Observe, measure and shade'], 2: ['Developing', 'Build believable forms'], 3: ['Intermediate', 'Perspective and anatomy'], 4: ['Advanced', 'Lighting and materials'], 5: ['Expert', 'Photorealism and mastery'] };
+    box.innerHTML = '';
+    SETS[c.id].forEach(function (l, i) {
+      if (l.lv !== last) { last = l.lv; box.appendChild(el('div', 'lvhead', names[l.lv][0] + ' <small>' + names[l.lv][1] + '</small>')); }
+      var b = el('button', 'les' + (progress.done[keyOf(c.id, l)] ? ' done' : ''));
+      var dots = c.id === 'basics' ? '' : '<span class="lv">Level ' + l.lv + '/5</span>';
+      b.innerHTML = '<span class="num">' + (i + 1) + '</span><div class="pic">' + Guide.thumb(l) + '</div><div class="nm"><span>' + esc(l.t) + '</span>' + dots + '</div>';
+      b.onclick = function () { startStudio({ cat: c.id, lesson: l }); };
+      box.appendChild(b);
+    });
+    show('list'); $('v-list').querySelector('.scroll').scrollTop = 0;
+  }
+
+  /* ---------- studio ---------- */
+  var cur = { cat: null, lesson: null, step: 0, steps: [], dirty: false, sketchId: null, name: '' };
+  var traceOn = false, backTo = 'home';
+  function fitPaper() {
+    var s = $('stage'), w = s.clientWidth - 24, h = s.clientHeight - 24, pw = Math.min(w, h * 4 / 3);
+    if (pw < 50) return;
+    $('paper').style.width = Math.floor(pw) + 'px'; $('paper').style.height = Math.floor(pw * 3 / 4) + 'px';
+  }
+  function buildTools() {
+    var rail = $('rail'); rail.innerHTML = '';
+    Paint.ORDER.forEach(function (id) {
+      var b = el('button', 'tool'), c = el('canvas'); c.width = 144; c.height = 68; b.dataset.id = id;
+      b.appendChild(c); b.appendChild(el('span', '', Paint.TOOLS[id].name));
+      b.onclick = function () { pickTool(id); };
+      rail.appendChild(b);
+    });
+    var dock = $('dock'); dock.innerHTML = '<div class="lab">Size</div>';
+    [8, 13, 19, 26, 34].forEach(function (d, i) {
+      var b = el('button', 'sz', '<i style="width:' + d + 'px;height:' + d + 'px"></i>'); b.setAttribute('aria-label', 'Size ' + (i + 1));
+      b.onclick = function () { Paint.setSize(i); syncTools(); }; dock.appendChild(b);
+    });
+    dock.appendChild(el('div', 'lab', 'Color'));
+    var chip = el('button', 'chip'); chip.id = 'chip'; chip.setAttribute('aria-label', 'Pick a color');
+    chip.onclick = function (e) { e.stopPropagation(); $('pal').classList.toggle('on'); }; dock.appendChild(chip);
+    var pal = $('pal'); pal.innerHTML = '';
+    COLORS.forEach(function (c) {
+      var b = el('button'); b.style.background = c; b.dataset.c = c; b.setAttribute('aria-label', 'Color');
+      b.onclick = function () { Paint.setColor(c); pal.classList.remove('on'); syncTools(); }; pal.appendChild(b);
+    });
+    $('stage').addEventListener('pointerdown', function (e) { if (!pal.contains(e.target)) pal.classList.remove('on'); });
+  }
+  function pickTool(id) { Paint.setTool(id); syncTools(); }
+  function syncTools() {
+    var id = Paint.tool(), col = Paint.color();
+    Array.prototype.forEach.call($('rail').children, function (b) {
+      b.classList.toggle('on', b.dataset.id === id);
+      Paint.preview(b.dataset.id, b.firstChild, col === '#ffffff' ? '#bdb9b4' : col);
+    });
+    Array.prototype.forEach.call($('dock').querySelectorAll('.sz'), function (b, i) { b.classList.toggle('on', i === Paint.size()); });
+    $('chip').style.background = col;
+    Array.prototype.forEach.call($('pal').children, function (b) { b.classList.toggle('on', b.dataset.c === col); });
+    var on = $('rail').querySelector('.on'); if (on && on.scrollIntoView) try { on.scrollIntoView({ block: 'nearest' }); } catch (e) { }
+  }
+  function syncBar() { $('s-undo').disabled = !Paint.canUndo(); $('s-redo').disabled = !Paint.canRedo(); }
+
+  function startStudio(o) {
+    o = o || {};
+    backTo = o.cat ? 'list' : (o.from || 'home');
+    cur = { cat: o.cat || null, lesson: o.lesson || null, step: 0, steps: o.lesson ? Guide.steps(o.lesson) : [], dirty: false, sketchId: o.sketchId || null, name: o.name || (o.lesson ? o.lesson.t : '') };
+    Paint.reset(); if (o.image) Paint.load(o.image);
+    Paint.setTool('pencil'); Paint.setSize(1); Paint.setColor('#2f2b28');
+    $('s-title').textContent = cur.name || 'Free Draw';
+    $('panel').classList.toggle('off', !cur.lesson); $('s-lesson').style.display = cur.lesson ? '' : 'none';
+    show('studio'); syncTools(); syncBar(); renderStep(); requestAnimationFrame(fitPaper);
+  }
+  function renderStep() {
+    $('trace').innerHTML = '';
+    if (!cur.lesson) return;
+    var n = cur.steps.length, s = cur.steps[cur.step], bonus = !cur.lesson.custom && cur.step === 5;
+    $('p-pic').innerHTML = Guide.svg(cur.lesson, cur.step);
+    $('p-no').textContent = bonus ? 'Bonus step' : 'Step ' + (cur.step + 1) + ' of ' + (cur.lesson.custom ? n : n - 1);
+    $('p-name').textContent = s.name; $('p-text').textContent = s.text;
+    var d = ''; for (var i = 0; i < n; i++) d += '<i class="' + (i < cur.step ? 'f' : i === cur.step ? 'c' : '') + '"></i>'; $('p-dots').innerHTML = d;
+    $('p-tool').innerHTML = 'Use the <b>&nbsp;' + Paint.TOOLS[s.tool].name + '</b>';
+    $('p-tool').style.visibility = Paint.tool() === s.tool ? 'hidden' : 'visible';
+    $('p-back').disabled = cur.step === 0; $('p-back').style.opacity = cur.step ? 1 : 0.4;
+    var last = cur.step === n - 1;
+    $('p-next').textContent = last ? 'I finished!' : 'Next step'; $('p-next').classList.toggle('fin', last);
+    $('p-trace').classList.toggle('on', traceOn); $('p-read').style.display = canSpeak ? '' : 'none';
+    if (traceOn) $('trace').innerHTML = Guide.svg(cur.lesson, cur.step);
+    $('panel').scrollTop = 0; stopSpeak();
+  }
+  function finishLesson() {
+    progress.done[keyOf(cur.cat, cur.lesson)] = Date.now(); saveProgress(); party();
+    ask({ title: 'Great drawing, ' + ARTIST + '!', text: 'You finished "' + cur.lesson.t + '". Do you want to save it?', buttons: [{ label: 'Save my drawing', kind: 'go', v: 'save' }, { label: 'Keep drawing', v: 'stay' }, { label: 'Back to the lessons', v: 'leave' }] })
+      .then(function (r) { if (r.v === 'save') saveFlow(); else if (r.v === 'leave') leave(true); });
+  }
+  function leave(force) {
+    function go() { stopSpeak(); if (backTo === 'list' && cur.cat) openList(CATS.filter(function (c) { return c.id === cur.cat; })[0]); else if (backTo === 'book') openBook(); else { renderHome(); show('home'); } }
+    if (force || !cur.dirty) return go();
+    ask({ title: 'Save before you go?', text: 'Your drawing is not saved yet.', buttons: [{ label: 'Save it first', kind: 'go', v: 's' }, { label: 'Leave without saving', kind: 'warn', v: 'l' }, { label: 'Keep drawing', v: 'k' }] })
+      .then(function (r) { if (r.v === 's') saveFlow(go); else if (r.v === 'l') go(); });
+  }
+
+  /* ---------- saving: sketchbook + PDF ---------- */
+  function fileName(s) { return (s || 'drawing').replace(/[^A-Za-z0-9 _-]/g, '').trim().replace(/\s+/g, '-').slice(0, 40) || 'drawing'; }
+  function jpegUrl(w, h, maxLen) { var c = Paint.flat(w, h), q = 0.86, u = c.toDataURL('image/jpeg', q); while (u.length > maxLen && q > 0.4) { q -= 0.1; u = c.toDataURL('image/jpeg', q); } return u; }
+  function bytesOf(dataUrl) { var b = atob(dataUrl.split(',')[1]), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
+  /* one-page PDF (US Letter, sideways) holding the drawing as a JPEG, with a caption line */
+  function makePdf(jpeg, w, h, caption) {
+    var enc = function (s) { var a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i) & 255; return a; };
+    var cap = caption.replace(/[^\x20-\x7e]/g, '').replace(/([\\()])/g, '\\$1');
+    var content = 'q 648 0 0 486 72 81 cm /Im0 Do Q\n0.75 G 1 w 72 81 648 486 re S\nBT /F1 12 Tf 0.35 g 72 56 Td (' + cap + ') Tj ET\n';
+    var parts = [], offs = [], len = 0;
+    function put(x) { var b = typeof x === 'string' ? enc(x) : x; parts.push(b); len += b.length; }
+    function obj(n, body) { offs[n] = len; put(n + ' 0 obj\n' + body + '\nendobj\n'); }
+    put('%' + 'PDF-1.4\n%\xe2\xe3\xcf\xd3\n');
+    obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+    obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+    obj(3, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 792 612] /Resources << /XObject << /Im0 4 0 R >> /Font << /F1 6 0 R >> >> /Contents 5 0 R >>');
+    offs[4] = len; put('4 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + w + ' /Height ' + h + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jpeg.length + ' >>\nstream\n'); put(jpeg); put('\nendstream\nendobj\n');
+    obj(5, '<< /Length ' + content.length + ' >>\nstream\n' + content + 'endstream');
+    obj(6, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+    var xref = len, x = 'xref\n0 7\n0000000000 65535 f \n';
+    for (var i = 1; i <= 6; i++) x += ('0000000000' + offs[i]).slice(-10) + ' 00000 n \n';
+    put(x + 'trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF\n');
+    var out = new Uint8Array(len), p = 0; parts.forEach(function (b) { out.set(b, p); p += b.length; });
+    return out;
+  }
+  window.__makePdf = makePdf;
+  function deliver(name, pdfBytes) {
+    var blob = new Blob([pdfBytes], { type: 'application/pdf' }), fname = fileName(name) + '.pdf';
+    var use = window.claude && window.claude.use ? window.claude.use('downloads') : Promise.resolve(null);
+    return use.then(function (dl) {
+      if (dl) return dl.save({ filename: fname, data: blob }).then(function () { toast('Your PDF is saved.'); }, function (e) { toast(e && e.code === 'declined' ? 'OK, the PDF was not saved.' : 'The PDF could not be saved here. Ask a grown-up.'); });
+      try { var a = el('a'); a.href = URL.createObjectURL(blob); a.download = fname; document.body.appendChild(a); a.click(); a.remove(); toast('Your PDF is ready.'); } catch (e) { toast('The PDF could not be saved here.'); }
+    });
+  }
+  function pdfFromCanvas(name) {
+    var c = Paint.flat(1600, 1200), url = c.toDataURL('image/jpeg', 0.92);
+    return deliver(name, makePdf(bytesOf(url), 1600, 1200, name + '  -  by ' + ARTIST + '  -  ' + new Date().toLocaleDateString()));
+  }
+  function saveSketch(name) {
+    var id = cur.sketchId || 's' + Date.now().toString(36), now = Date.now();
+    if (!cur.sketchId && index.items.length >= 40) { toast('Your sketchbook is full. Delete one drawing to make room.'); return Promise.resolve(false); }
+    var doc = { name: name, date: now, img: jpegUrl(1200, 900, 215000) }, thumb = jpegUrl(160, 120, 6000);
+    return Store.set('sketches/' + id, doc, true).then(function () {
+      index.items = index.items.filter(function (i) { return i.id !== id; }); index.items.unshift({ id: id, name: name, date: now, thumb: thumb });
+      cur.sketchId = id; cur.dirty = false; cur.name = name; $('s-title').textContent = name;
+      return Store.set('app/sketchindex', index).then(function () { toast('Saved to your sketchbook.'); return true; });
+    }).catch(function () { toast('That did not save. Check the internet and try again.'); return false; });
+  }
+  function saveFlow(after) {
+    ask({ title: 'Save your drawing', text: 'Give it a name.', input: cur.name || 'My drawing', buttons: [{ label: 'Save to my Sketchbook', kind: 'go', v: 'book' }, { label: 'Save as a PDF file', kind: 'ok', v: 'pdf' }, { label: 'Cancel', v: 'x' }] })
+      .then(function (r) {
+        var name = r.text || 'My drawing';
+        if (r.v === 'book') saveSketch(name).then(function (ok) { if (ok && after) after(); });
+        else if (r.v === 'pdf') { cur.name = name; pdfFromCanvas(name).then(function () { if (after) setTimeout(after, 400); }); }
+      });
+  }
+
+  /* ---------- sketchbook ---------- */
+  function loadImg(url) { return new Promise(function (res, rej) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = rej; i.src = url; }); }
+  function openBook() { renderBook(); show('book'); }
+  function renderBook() {
+    var box = $('book'); box.innerHTML = '';
+    $('booknote').textContent = index.items.length ? index.items.length + ' of 40 pages used. Open a drawing to keep working on it, or save it as a PDF.' : '';
+    if (!index.items.length) { box.appendChild(el('div', 'empty', '<h3>Your sketchbook is empty</h3>Finish a drawing and tap Save. It will show up here.')); box.style.display = 'block'; return; }
+    box.style.display = '';
+    index.items.forEach(function (it) {
+      var c = el('div', 'sk'); c.innerHTML = '<img alt="" src="' + it.thumb + '"><div class="nm">' + esc(it.name) + '</div><div class="dt">' + new Date(it.date).toLocaleDateString() +
+        '</div><div class="act"><button class="open">Open</button><button class="pdf">PDF</button><button class="del">Delete</button></div>';
+      var get = function () { return Store.get('sketches/' + it.id).then(function (d) { if (!d || !d.img) throw 0; return d; }); };
+      c.querySelector('.open').onclick = function () { get().then(function (d) { return loadImg(d.img); }).then(function (img) { startStudio({ image: img, sketchId: it.id, name: it.name, from: 'book' }); }, function () { toast('That drawing could not be opened right now.'); }); };
+      c.querySelector('.pdf').onclick = function () {
+        get().then(function (d) { return loadImg(d.img).then(function (img) { return deliver(it.name, makePdf(bytesOf(d.img), img.naturalWidth, img.naturalHeight, it.name + '  -  by ' + ARTIST + '  -  ' + new Date(it.date).toLocaleDateString())); }); })
+          .catch(function () { toast('That drawing could not be opened right now.'); });
+      };
+      c.querySelector('.del').onclick = function () {
+        ask({ title: 'Delete "' + it.name + '"?', text: 'It will be gone for good.', buttons: [{ label: 'Keep it', kind: 'go', v: 0 }, { label: 'Yes, delete it', kind: 'warn', v: 1 }] }).then(function (r) {
+          if (!r.v) return;
+          index.items = index.items.filter(function (i) { return i.id !== it.id; }); Store.set('app/sketchindex', index).catch(function () { }); Store.del('sketches/' + it.id).catch(function () { }); renderBook();
+        });
+      };
+      box.appendChild(c);
+    });
+  }
+
+
+  /* ---------- real-life photo references ---------- */
+  // Create a free Unsplash developer app at https://unsplash.com/developers
+  // and paste its Access Key here to enable live photo search.
+  var UNSPLASH_ACCESS_KEY = 'PASTE_YOUR_UNSPLASH_ACCESS_KEY_HERE';
+  function openPhotoPicker() {
+    $('photo-veil').classList.add('on');
+    if (!$('photo-grid').children.length) showSamplePhotos();
+    $('photo-query').focus();
+  }
+  function closePhotoPicker() { $('photo-veil').classList.remove('on'); }
+  function photoStatus(msg) { $('photo-status').textContent = msg; }
+  function showSamplePhotos() {
+    var grid = $('photo-grid'); grid.innerHTML = '';
+    var examples = [
+      { url:'https://images.unsplash.com/photo-1551739440-5dd934d3a94a?w=700&auto=format&fit=crop', alt:'Red fox' },
+      { url:'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=700&auto=format&fit=crop', alt:'Flowers' },
+      { url:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=700&auto=format&fit=crop', alt:'Red sneaker' },
+      { url:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=700&auto=format&fit=crop', alt:'Mountain landscape' }
+    ];
+    examples.forEach(function (ph) { addPhotoResult(ph.url, ph.alt, 'Unsplash', 'https://unsplash.com/'); });
+  }
+  function addPhotoResult(url, label, credit, creditUrl) {
+    var b = el('button', 'photo-result');
+    var im = el('img'); im.src = url; im.alt = label; im.loading = 'lazy';
+    var cap = el('span'); cap.textContent = label + (credit ? ' · ' + credit : '');
+    b.appendChild(im); b.appendChild(cap);
+    b.onclick = function () { selectPhoto(url, label, credit); };
+    $('photo-grid').appendChild(b);
+  }
+  function selectPhoto(url, label, credit) {
+    var im = new Image();
+    im.onload = function () {
+      $('photo-card-img').src = url;
+      $('photo-card-name').textContent = label + (credit ? ' · ' + credit : '');
+      $('photo-card').classList.add('on');
+      closePhotoPicker();
+      toast('Photo reference added beside your paper.');
+    };
+    im.onerror = function () { photoStatus('That photo could not load. Try another image or upload your own.'); };
+    im.src = url;
+  }
+  function searchUnsplash() {
+    var q = $('photo-query').value.trim();
+    if (!q) { photoStatus('Type a subject to search for photos.'); return; }
+    if (!UNSPLASH_ACCESS_KEY || UNSPLASH_ACCESS_KEY.indexOf('PASTE_') === 0) {
+      showSamplePhotos();
+      photoStatus('Live search is not connected yet. Add your free Unsplash Access Key to UNSPLASH_ACCESS_KEY in src/app.js. Sample photos are ready to use.');
+      return;
+    }
+    photoStatus('Looking for real-life photos…');
+    $('photo-grid').innerHTML = '';
+    fetch('https://api.unsplash.com/search/photos?query=' + encodeURIComponent(q) + '&per_page=12&orientation=landscape', {
+      headers: { Authorization: 'Client-ID ' + UNSPLASH_ACCESS_KEY }
+    }).then(function (r) {
+      if (!r.ok) throw new Error('Unsplash returned ' + r.status);
+      return r.json();
+    }).then(function (data) {
+      if (!data.results || !data.results.length) throw new Error('No matching photos');
+      data.results.forEach(function (photo) {
+        var url = photo.urls && (photo.urls.small || photo.urls.regular);
+        if (url) addPhotoResult(url, photo.alt_description || photo.description || q, photo.user && photo.user.name ? 'Photo by ' + photo.user.name + ' on Unsplash' : 'Unsplash', photo.user && photo.user.links && photo.user.links.html ? photo.user.links.html : 'https://unsplash.com/');
+      });
+      photoStatus(data.results.length + ' photo references found. Tap one to put it beside your drawing.');
+    }).catch(function () {
+      showSamplePhotos();
+      photoStatus('Photo search is unavailable right now. Check your connection and Unsplash Access Key, or use a sample photo / upload your own.');
+    });
+  }
+  function uploadPhoto(file) {
+    if (!file) return;
+    if (!file.type || file.type.indexOf('image/') !== 0) { photoStatus('Please choose an image file.'); return; }
+    if (file.size > 15 * 1024 * 1024) { photoStatus('That photo is larger than 15 MB. Choose a smaller image.'); return; }
+    var reader = new FileReader();
+    reader.onload = function () { selectPhoto(reader.result, file.name || 'Your photo', 'uploaded'); };
+    reader.onerror = function () { photoStatus('That photo could not be opened. Try another file.'); };
+    reader.readAsDataURL(file);
+  }
+
+  /* ---------- wire up ---------- */
+  function boot() {
+    Paint.init($('ink'), $('live'), function () { cur.dirty = true; syncBar(); });
+    buildTools(); renderHome();
+    Paint.setColor('#1d3f73'); Paint.preview('charcoal', $('heroart'), '#1d3f73'); Paint.setColor('#2f2b28');
+    $('b-free').onclick = function () { startStudio({}); };
+    $('b-book').onclick = openBook;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-go="home"]'), function (b) { b.onclick = function () { renderHome(); show('home'); }; });
+    $('s-home').onclick = function () { leave(false); };
+    $('s-undo').onclick = function () { Paint.undo(); }; $('s-redo').onclick = function () { Paint.redo(); };
+    $('s-clear').onclick = function () {
+      ask({ title: 'Start over?', text: 'This wipes the whole page. You can still tap Undo to get it back.', buttons: [{ label: 'Keep my drawing', kind: 'go', v: 0 }, { label: 'Yes, wipe the page', kind: 'warn', v: 1 }] }).then(function (r) { if (r.v) Paint.clear(); });
+    };
+    $('s-save').onclick = function () { saveFlow(); };
+    $('s-lesson').onclick = function () { $('panel').classList.toggle('off'); fitPaper(); };
+    $('p-next').onclick = function () { if (cur.step < cur.steps.length - 1) { cur.step++; renderStep(); } else finishLesson(); };
+    $('p-back').onclick = function () { if (cur.step > 0) { cur.step--; renderStep(); } };
+    $('p-trace').onclick = function () { traceOn = !traceOn; renderStep(); if (traceOn) toast('The guide is on your paper. Draw right over it.'); };
+    $('p-read').onclick = function () { var s = cur.steps[cur.step]; speak(s.name + '. ' + s.text); };
+    $('p-tool').onclick = function () { pickTool(cur.steps[cur.step].tool); $('p-tool').style.visibility = 'hidden'; };
+    $('s-photos').onclick = openPhotoPicker;
+    $('photo-close').onclick = closePhotoPicker;
+    $('photo-veil').addEventListener('click', function (e) { if (e.target === $('photo-veil')) closePhotoPicker(); });
+    $('photo-search-btn').onclick = searchUnsplash;
+    $('photo-query').addEventListener('keydown', function (e) { if (e.key === 'Enter') searchUnsplash(); });
+    $('photo-file').addEventListener('change', function (e) { uploadPhoto(e.target.files && e.target.files[0]); e.target.value = ''; });
+    $('photo-hide').onclick = function () { $('photo-card').classList.remove('on'); };
+    $('photo-change').onclick = openPhotoPicker;
+    window.addEventListener('resize', function () { if (view === 'studio') fitPaper(); });
+    document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+  }
+  boot();
+})();
+
+</script>
+</body>
+</html>
